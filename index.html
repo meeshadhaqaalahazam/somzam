@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MineLedger</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: fixed left sidebar with collapsible groups, content area with page header + cards. */
+:root {
+  --bg: #f3f4f1;
+  --surface: #ffffff;
+  --surface-2: #eceee9;
+  --line: #d9dcd4;
+  --fg: #1d221f;
+  --muted: #5f675f;
+  --side-bg: #1f2a26;
+  --side-fg: #c9d2cc;
+  --side-hover: #2b3833;
+  --side-active: #34443e;
+  --accent: #b7791f;      /* ore gold */
+  --accent-soft: #f4e6cc;
+  --good: #2f7d4f;
+  --good-soft: #dcefe2;
+  --warn: #a8641a;
+  --warn-soft: #f6e5cf;
+  --bad: #b23a32;
+  --bad-soft: #f6dcd9;
+  --chart-a: #b7791f;
+  --chart-b: #3e6b5c;
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", Roboto, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141917; --surface: #1c2320; --surface-2: #232b28; --line: #313b37; --fg: #e6ebe7; --muted: #9aa59e;
+    --side-bg: #101513; --side-fg: #b9c4bd; --side-hover: #1d2522; --side-active: #27322e;
+    --accent: #e0a446; --accent-soft: #3b2f1c; --good: #6cc08d; --good-soft: #1d3326; --warn: #e3a35a; --warn-soft: #3a2c1b;
+    --bad: #ec7d74; --bad-soft: #3d2220; --chart-a: #e0a446; --chart-b: #79b5a1; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141917; --surface: #1c2320; --surface-2: #232b28; --line: #313b37; --fg: #e6ebe7; --muted: #9aa59e;
+  --side-bg: #101513; --side-fg: #b9c4bd; --side-hover: #1d2522; --side-active: #27322e;
+  --accent: #e0a446; --accent-soft: #3b2f1c; --good: #6cc08d; --good-soft: #1d3326; --warn: #e3a35a; --warn-soft: #3a2c1b;
+  --bad: #ec7d74; --bad-soft: #3d2220; --chart-a: #e0a446; --chart-b: #79b5a1; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 14px; line-height: 1.45; }
+button, input, select { font: inherit; color: inherit; }
+.app { display: flex; min-height: 100%; }
+
+/* Sidebar */
+.side { width: 248px; flex-shrink: 0; background: var(--side-bg); color: var(--side-fg); display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto; padding-left: env(safe-area-inset-left, 0px); }
+.brand { display: flex; align-items: center; gap: 10px; padding: 18px 18px 14px; }
+.brand-mark { width: 30px; height: 30px; border-radius: 7px; background: var(--accent); display: grid; place-items: center; color: #1a1408; }
+.brand-name { font-family: var(--f-display); font-weight: 700; font-size: 17px; color: #fff; letter-spacing: .01em; }
+.brand-sub { font-size: 11px; color: var(--side-fg); opacity: .7; }
+.nav { display: flex; flex-direction: column; gap: 2px; padding: 6px 10px 20px; }
+.nav-item, .nav-group > button { display: flex; align-items: center; gap: 11px; width: 100%; border: 0; background: none; color: var(--side-fg);
+  padding: 10px 10px; border-radius: 7px; cursor: pointer; text-align: left; font-weight: 500; text-decoration: none; }
+.nav-item:hover, .nav-group > button:hover { background: var(--side-hover); color: #fff; }
+.nav-item:focus-visible, .nav-group > button:focus-visible, .sub a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.nav-item.active, .nav-group.open > button { color: #fff; }
+.nav-item.active { background: var(--side-active); }
+.nav svg { width: 18px; height: 18px; flex-shrink: 0; }
+.chev { margin-left: auto; transition: transform .15s; opacity: .6; width: 14px !important; height: 14px !important; }
+.nav-group.open .chev { transform: rotate(90deg); }
+.sub { display: none; flex-direction: column; gap: 1px; padding: 2px 0 6px 39px; }
+.nav-group.open .sub { display: flex; }
+.sub a { color: var(--side-fg); text-decoration: none; padding: 7px 10px; border-radius: 6px; font-size: 13.5px; }
+.sub a:hover { background: var(--side-hover); color: #fff; }
+.sub a.active { color: #fff; background: var(--side-active); box-shadow: inset 2px 0 0 var(--accent); }
+.side-foot { margin-top: auto; padding: 14px 18px; border-top: 1px solid var(--side-hover); font-size: 12px; display: flex; gap: 10px; align-items: center; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--side-active); display: grid; place-items: center; color: #fff; font-weight: 600; font-size: 12px; }
+
+/* Main */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 12px; padding-block: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.menu-btn { display: none; border: 1px solid var(--line); background: var(--surface); border-radius: 7px; padding: 6px 8px; cursor: pointer; }
+.crumb { color: var(--muted); font-size: 13px; }
+.crumb b { color: var(--fg); font-weight: 600; }
+.topbar .spacer { flex: 1; }
+.example-pill { font-size: 11.5px; padding: 3px 9px; border-radius: 99px; background: var(--accent-soft); color: var(--warn); font-weight: 600; letter-spacing: .02em; }
+.content { padding-block: 22px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  max-width: 1200px; width: 100%; display: flex; flex-direction: column; gap: 18px; }
+.page-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.page-head h1 { font-family: var(--f-display); font-size: 24px; font-weight: 700; margin: 0; text-wrap: balance; }
+.page-head p { margin: 2px 0 0; color: var(--muted); }
+.page-head .actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 500; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #1a1408; font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.05); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.card h2 { font-family: var(--f-display); font-size: 15px; font-weight: 600; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+.card h2 .link { margin-left: auto; font-family: var(--f-body); font-size: 12.5px; font-weight: 500; color: var(--accent); text-decoration: none; }
+.grid { display: grid; gap: 14px; }
+.g-kpi { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.g-2 { grid-template-columns: 2fr 1fr; }
+.g-2e { grid-template-columns: 1fr 1fr; }
+.kpi { display: flex; flex-direction: column; gap: 4px; }
+.kpi .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 500; }
+.kpi .value { font-family: var(--f-display); font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.kpi .note { font-size: 12.5px; color: var(--muted); }
+.up { color: var(--good); } .down { color: var(--bad); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-family: var(--f-mono); font-size: 13px; }
+.chip { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+.chip.good { background: var(--good-soft); color: var(--good); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+.chip.neutral { background: var(--surface-2); color: var(--muted); }
+
+.alerts { display: flex; flex-direction: column; gap: 8px; }
+.alert { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); }
+.alert .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.alert small { display: block; color: var(--muted); }
+
+.bars { display: flex; flex-direction: column; gap: 12px; }
+.bar-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; }
+.bar-row .track { grid-column: 1 / -1; height: 9px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+.bar-row .fill { height: 100%; background: var(--chart-b); border-radius: 99px; }
+.bar-row .fill.gold { background: var(--chart-a); }
+.bar-row .v { font-family: var(--f-mono); font-size: 13px; }
+
+.form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field.full { grid-column: 1 / -1; }
+.field label { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.field input, .field select { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 9px 11px; min-width: 0; }
+.field input:focus, .field select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+.calc { display: flex; flex-direction: column; gap: 0; }
+.calc-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px dashed var(--line); gap: 10px; }
+.calc-row span:last-child { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.calc-row.total { border-bottom: 0; padding-top: 14px; font-weight: 700; font-size: 18px; }
+.calc-row.total span:last-child { color: var(--accent); }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
+
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.filters button { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 5px 12px; cursor: pointer; font-size: 13px; }
+.filters button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+.chart svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+.toast { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg);
+  padding: 10px 16px; border-radius: 8px; font-weight: 500; z-index: 30; }
+.scrim { display: none; }
+
+@media (max-width: 900px) {
+  .g-2, .g-2e { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .side { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; z-index: 20; transform: translateX(-100%); transition: transform .2s;
+    padding-top: env(safe-area-inset-top, 0px); }
+  .app.menu-open .side { transform: none; }
+  .app.menu-open .scrim { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 15; }
+  .menu-btn { display: inline-flex; }
+  .form { grid-template-columns: 1fr; }
+  .example-pill { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="app" id="app">
+  <aside class="side" id="side" aria-label="Main menu">
+    <div class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l6-11 4 6 3-4 5 9z"/></svg></div>
+      <div><div class="brand-name">MineLedger</div><div class="brand-sub">Office administration</div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot"><div class="avatar">AM</div><div><div style="color:#fff;font-weight:600">A. Mensah</div><div style="opacity:.7">Owner</div></div></div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <div class="crumb" id="crumb"></div>
+      <div class="spacer"></div>
+      <span class="example-pill">Prototype · example data</span>
+    </header>
+    <main class="content" id="view"></main>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const I = {
+  home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  buy: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 21h16"/>',
+  adv: '<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  sell: '<path d="M12 21V9M7 14l5-5 5 5"/><path d="M4 3h16"/>',
+  stock: '<path d="M2 20l7-12 4 6 3-4 6 10z"/>',
+  exp: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>',
+  staff: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
+  cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
+  rep: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  cog: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  chev: '<path d="M9 6l6 6-6 6"/>'
+};
+const svg = (p, cls='') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+
+const NAV = [
+  { id: 'dashboard', label: 'Dashboard', icon: 'home' },
+  { label: 'Purchases', icon: 'buy', children: [
+    { id: 'purchase-new', label: 'Buy minerals' }, { id: 'purchases', label: 'Purchase list' }, { id: 'suppliers', label: 'Suppliers' } ] },
+  { label: 'Advances', icon: 'adv', children: [
+    { id: 'advance-new', label: 'Give advance' }, { id: 'advances', label: 'Open advances' } ] },
+  { label: 'Sales', icon: 'sell', children: [
+    { id: 'sale-new', label: 'New sale' }, { id: 'sales', label: 'Sales list' }, { id: 'buyers', label: 'Buyers' } ] },
+  { label: 'Stockpiles', icon: 'stock', children: [
+    { id: 'stock', label: 'Stock overview' }, { id: 'stock-move', label: 'Add or remove stock' } ] },
+  { label: 'Expenses', icon: 'exp', children: [
+    { id: 'expense-new', label: 'Add expense' }, { id: 'expenses', label: 'Daily expenses' } ] },
+  { label: 'Employees', icon: 'staff', children: [
+    { id: 'staff', label: 'Staff list' }, { id: 'payroll', label: 'Salaries' }, { id: 'leave', label: 'Days off' } ] },
+  { label: 'Cash book', icon: 'cash', children: [
+    { id: 'cash', label: 'Cash in and out' } ] },
+  { label: 'Reports', icon: 'rep', children: [
+    { id: 'statement', label: 'Supplier statement' }, { id: 'monthly', label: 'Monthly summary' } ] },
+  { label: 'Admin', icon: 'cog', children: [
+    { id: 'users', label: 'Users and roles' }, { id: 'minerals', label: 'Minerals and prices' } ] }
+];
+
+// ---------- Example data ----------
+const usd = n => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const usd2 = n => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const kg = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 }) + ' kg';
+const t = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 }) + ' t';
+
+const minerals = [
+  { name: 'Cassiterite (tin)', unit: 'kg', price: 14.2, grade: '65%' },
+  { name: 'Coltan', unit: 'kg', price: 38.5, grade: '30% Ta₂O₅' },
+  { name: 'Wolframite', unit: 'kg', price: 11.8, grade: '60% WO₃' }
+];
+const suppliers = [
+  { id: 'S-014', name: 'Joseph Mwamba', phone: '0812 345 567', site: 'Kalimbi pit 3', bought: 18450, open: 450 },
+  { id: 'S-022', name: 'Grace Uwase', phone: '0788 102 994', site: 'River site B', bought: 9320, open: 0 },
+  { id: 'S-031', name: 'Kibo Miners Co-op', phone: '0755 660 120', site: 'Kibo hill', bought: 41200, open: 1200 },
+  { id: 'S-037', name: 'Emmanuel Okello', phone: '0701 448 310', site: 'Nyange pit 1', bought: 6100, open: 300 },
+  { id: 'S-040', name: 'Fatuma Said', phone: '0766 900 215', site: 'River site A', bought: 3880, open: 0 }
+];
+const purchases = [
+  { no: 'P-1187', date: '14 Nov', sup: 'Kibo Miners Co-op', min: 'Cassiterite (tin)', net: 412.5, total: 5857, adv: 0, status: 'Paid' },
+  { no: 'P-1186', date: '14 Nov', sup: 'Joseph Mwamba', min: 'Coltan', net: 38.2, total: 1471, adv: 450, status: 'Paid' },
+  { no: 'P-1185', date: '13 Nov', sup: 'Grace Uwase', min: 'Cassiterite (tin)', net: 96.0, total: 1363, adv: 0, status: 'Paid' },
+  { no: 'P-1184', date: '13 Nov', sup: 'Emmanuel Okello', min: 'Wolframite', net: 140.0, total: 1652, adv: 300, status: 'Unpaid' },
+  { no: 'P-1183', date: '12 Nov', sup: 'Fatuma Said', min: 'Cassiterite (tin)', net: 55.3, total: 785, adv: 0, status: 'Paid' }
+];
+const advances = [
+  { no: 'A-208', date: '02 Oct', sup: 'Kibo Miners Co-op', type: 'Cash', amount: 800, age: 43 },
+  { no: 'A-214', date: '20 Oct', sup: 'Kibo Miners Co-op', type: 'Fuel', amount: 400, age: 25 },
+  { no: 'A-217', date: '29 Oct', sup: 'Emmanuel Okello', type: 'Tools', amount: 300, age: 16 },
+  { no: 'A-219', date: '05 Nov', sup: 'Joseph Mwamba', type: 'Cash', amount: 450, age: 9 }
+];
+const buyers = [
+  { name: 'Lakeview Smelting Ltd', contact: 'R. Patel', country: 'Export', sold: 128400, open: 12500 },
+  { name: 'Eastern Metals Trading', contact: 'J. Kimani', country: 'Local', sold: 46200, open: 0 }
+];
+const sales = [
+  { no: 'V-062', date: '10 Nov', buyer: 'Lakeview Smelting Ltd', min: 'Cassiterite (tin)', qty: 2400, price: 18.9, status: 'Awaiting payment' },
+  { no: 'V-061', date: '28 Oct', buyer: 'Eastern Metals Trading', min: 'Wolframite', qty: 900, price: 15.1, status: 'Paid' },
+  { no: 'V-060', date: '15 Oct', buyer: 'Lakeview Smelting Ltd', min: 'Coltan', qty: 310, price: 52.0, status: 'Paid' }
+];
+const stockpiles = [
+  { name: 'Pit A raw sand', kind: 'Own mining', qty: 186.4, cap: 250, unit: 't' },
+  { name: 'Pit B raw sand', kind: 'Own mining', qty: 74.0, cap: 250, unit: 't' },
+  { name: 'Washed tin concentrate', kind: 'Bought + processed', qty: 3.1, cap: 6, unit: 't' },
+  { name: 'Coltan store', kind: 'Bought', qty: 0.42, cap: 1, unit: 't' },
+  { name: 'Wolframite store', kind: 'Bought', qty: 1.2, cap: 3, unit: 't' }
+];
+const moves = [
+  { date: '14 Nov', pile: 'Washed tin concentrate', dir: 'In', qty: 0.41, reason: 'Purchase P-1187', by: 'D. Banda' },
+  { date: '14 Nov', pile: 'Pit A raw sand', dir: 'In', qty: 22.0, reason: 'Excavation day shift', by: 'P. Nkosi' },
+  { date: '13 Nov', pile: 'Pit A raw sand', dir: 'Out', qty: 15.0, reason: 'To washing plant', by: 'P. Nkosi' },
+  { date: '10 Nov', pile: 'Washed tin concentrate', dir: 'Out', qty: 2.4, reason: 'Sale V-062', by: 'D. Banda' }
+];
+const expenseCats = ['Food', 'Fuel', 'Gas', 'Transport', 'Repairs', 'Other'];
+const expenses = [
+  { date: '14 Nov', cat: 'Fuel', desc: 'Diesel excavator, 120 L', by: 'P. Nkosi', amount: 186 },
+  { date: '14 Nov', cat: 'Food', desc: 'Lunch for 18 workers', by: 'S. Achieng', amount: 54 },
+  { date: '13 Nov', cat: 'Gas', desc: 'Cooking gas 2 × 13 kg', by: 'S. Achieng', amount: 38 },
+  { date: '13 Nov', cat: 'Repairs', desc: 'Water pump seal', by: 'P. Nkosi', amount: 72 },
+  { date: '12 Nov', cat: 'Transport', desc: 'Truck to town (supplies)', by: 'D. Banda', amount: 45 },
+  { date: '12 Nov', cat: 'Food', desc: 'Lunch for 17 workers', by: 'S. Achieng', amount: 51 },
+  { date: '11 Nov', cat: 'Fuel', desc: 'Generator petrol, 40 L', by: 'P. Nkosi', amount: 62 }
+];
+const staff = [
+  { name: 'Peter Nkosi', role: 'Site supervisor', start: 'Mar 2022', salary: 650, status: 'Working', leaveLeft: 12 },
+  { name: 'David Banda', role: 'Store keeper', start: 'Jun 2023', salary: 420, status: 'Working', leaveLeft: 9 },
+  { name: 'Sarah Achieng', role: 'Cook', start: 'Jan 2024', salary: 260, status: 'Working', leaveLeft: 14 },
+  { name: 'Moses Tembo', role: 'Excavator operator', start: 'Aug 2022', salary: 480, status: 'Day off', leaveLeft: 6 },
+  { name: 'Ruth Kamau', role: 'Cashier', start: 'Feb 2025', salary: 400, status: 'Working', leaveLeft: 15 },
+  { name: 'John Phiri', role: 'Washer', start: 'Sep 2024', salary: 220, status: 'Sick', leaveLeft: 11 },
+  { name: 'Ali Hassan', role: 'Security', start: 'May 2023', salary: 240, status: 'Working', leaveLeft: 8 }
+];
+const leaves = [
+  { name: 'Moses Tembo', type: 'Day off', from: '14 Nov', to: '15 Nov', days: 2, status: 'Approved' },
+  { name: 'John Phiri', type: 'Sick', from: '13 Nov', to: '15 Nov', days: 3, status: 'Approved' },
+  { name: 'Ali Hassan', type: 'Day off', from: '20 Nov', to: '20 Nov', days: 1, status: 'Waiting' },
+  { name: 'Sarah Achieng', type: 'Holiday', from: '22 Dec', to: '29 Dec', days: 6, status: 'Waiting' }
+];
+const cashbook = [
+  { date: '14 Nov', desc: 'Purchase P-1187 Kibo Miners Co-op', inn: 0, out: 5857 },
+  { date: '14 Nov', desc: 'Purchase P-1186 Joseph Mwamba (after advance)', inn: 0, out: 1021 },
+  { date: '14 Nov', desc: 'Fuel and food', inn: 0, out: 240 },
+  { date: '13 Nov', desc: 'Bank withdrawal', inn: 10000, out: 0 },
+  { date: '13 Nov', desc: 'Purchase P-1185 Grace Uwase', inn: 0, out: 1363 },
+  { date: '12 Nov', desc: 'Payment Eastern Metals V-061', inn: 13590, out: 0 }
+];
+
+// ---------- Helpers ----------
+const table = (cols, rows) => `<div class="table-wrap"><table><thead><tr>${cols.map(c => `<th class="${c.num ? 'num' : ''}">${c.h}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map(r => `<tr>${cols.map(c => `<td class="${c.num ? 'num' : ''}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+const chip = (text, kind) => `<span class="chip ${kind}">${text}</span>`;
+const statusChip = s => chip(s, { Paid: 'good', Approved: 'good', Working: 'good', Unpaid: 'warn', Waiting: 'warn', 'Awaiting payment': 'warn', 'Day off': 'neutral', Holiday: 'neutral', Sick: 'bad' }[s] || 'neutral');
+const head = (title, sub, actions = '') => `<div class="page-head"><div><h1>${title}</h1><p>${sub}</p></div><div class="actions">${actions}</div></div>`;
+const go = (id, text, cls = 'btn') => `<button class="${cls}" data-go="${id}">${text}</button>`;
+const save = text => `<button class="btn primary" data-save="${text}">${text}</button>`;
+const opts = arr => arr.map(x => `<option>${x}</option>`).join('');
+
+// ---------- Views ----------
+const V = {};
+
+V.dashboard = () => {
+  const days = ['Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
+  const buy = [4.2, 3.1, 0.8, 5.6, 6.4, 3.0, 7.3];
+  const sell = [0, 0, 0, 13.6, 0, 0, 0];
+  const max = 15, W = 560, H = 190, pad = 28, bw = 26;
+  const step = (W - pad * 2) / days.length;
+  const y = v => H - 24 - (v / max) * (H - 44);
+  let g = '';
+  [0, 5, 10, 15].forEach(v => { g += `<line x1="${pad}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${pad - 6}" y="${y(v) + 4}" font-size="10" text-anchor="end" fill="var(--muted)">${v}k</text>`; });
+  days.forEach((d, i) => {
+    const x = pad + i * step + step / 2;
+    g += `<rect x="${x - bw / 2 - 1}" y="${y(buy[i])}" width="${bw / 2}" height="${y(0) - y(buy[i])}" rx="2" fill="var(--chart-a)"/>`;
+    if (sell[i]) g += `<rect x="${x + 1}" y="${y(sell[i])}" width="${bw / 2}" height="${y(0) - y(sell[i])}" rx="2" fill="var(--chart-b)"/>`;
+    g += `<text x="${x}" y="${H - 6}" font-size="11" text-anchor="middle" fill="var(--muted)">${d}</text>`;
+  });
+  const totalStock = stockpiles.filter(s => s.kind === 'Own mining').reduce((a, s) => a + s.qty, 0);
+  return head('Good morning, Ama', 'Friday 14 November · overview of today and this month',
+      go('purchase-new', 'Buy minerals', 'btn primary') + go('expense-new', 'Add expense')) + `
+  <div class="grid g-kpi">
+    <div class="card kpi"><span class="label">Cash in safe</span><span class="value">${usd(8412)}</span><span class="note">After today's payments</span></div>
+    <div class="card kpi"><span class="label">Bought this month</span><span class="value">${usd(52480)}</span><span class="note"><span class="up">▲ 12%</span> vs October · 3.7 t</span></div>
+    <div class="card kpi"><span class="label">Sold this month</span><span class="value">${usd(45360)}</span><span class="note">1 sale awaiting payment</span></div>
+    <div class="card kpi"><span class="label">Open advances</span><span class="value">${usd(1950)}</span><span class="note">4 advances · 3 suppliers</span></div>
+    <div class="card kpi"><span class="label">Raw sand in stock</span><span class="value">${t(totalStock)}</span><span class="note">Pit A + Pit B</span></div>
+    <div class="card kpi"><span class="label">Expenses this month</span><span class="value">${usd(3264)}</span><span class="note"><span class="down">▲ 8%</span> fuel higher than usual</span></div>
+  </div>
+  <div class="grid g-2">
+    <div class="card chart"><h2>Bought and sold, last 7 days<a class="link" href="#purchases">Purchase list →</a></h2>
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Bar chart of purchases and sales per day in thousands of dollars">${g}</svg>
+      <div class="legend"><span><i style="background:var(--chart-a)"></i>Bought ($)</span><span><i style="background:var(--chart-b)"></i>Sold ($)</span></div>
+    </div>
+    <div class="card"><h2>Needs attention</h2><div class="alerts">
+      <div class="alert"><span class="dot" style="background:var(--bad)"></span><div>Advance A-208 is 43 days open<small>Kibo Miners Co-op · $800</small></div></div>
+      <div class="alert"><span class="dot" style="background:var(--warn)"></span><div>Lakeview Smelting owes $12,500<small>Sale V-062 · due 24 Nov</small></div></div>
+      <div class="alert"><span class="dot" style="background:var(--warn)"></span><div>2 day-off requests waiting<small>Ali Hassan, Sarah Achieng</small></div></div>
+      <div class="alert"><span class="dot" style="background:var(--good)"></span><div>Salaries due in 16 days<small>18 employees · ${usd(7240)}</small></div></div>
+    </div></div>
+  </div>
+  <div class="grid g-2">
+    <div class="card"><h2>Latest purchases<a class="link" href="#purchases">See all →</a></h2>${table([
+      { h: 'Date', f: r => r.date }, { h: 'Supplier', f: r => r.sup }, { h: 'Mineral', f: r => r.min },
+      { h: 'Net', num: 1, f: r => kg(r.net) }, { h: 'Amount', num: 1, f: r => usd(r.total) }, { h: 'Status', f: r => statusChip(r.status) }
+    ], purchases.slice(0, 4))}</div>
+    <div class="card"><h2>Stockpiles<a class="link" href="#stock">Details →</a></h2><div class="bars">${stockpiles.map(s => `
+      <div class="bar-row"><span>${s.name}</span><span class="v">${t(s.qty)}</span><div class="track"><div class="fill ${s.kind === 'Own mining' ? '' : 'gold'}" style="width:${Math.min(100, s.qty / s.cap * 100)}%"></div></div></div>`).join('')}
+    </div></div>
+  </div>
+  <div class="card"><h2>Today on site</h2><div class="grid g-kpi">
+    <div class="kpi"><span class="label">Working</span><span class="value">16</span></div>
+    <div class="kpi"><span class="label">Day off</span><span class="value">1</span><span class="note">Moses Tembo</span></div>
+    <div class="kpi"><span class="label">Sick</span><span class="value">1</span><span class="note">John Phiri</span></div>
+    <div class="kpi"><span class="label">Spent today</span><span class="value">${usd(240)}</span><span class="note">Fuel $186 · food $54</span></div>
+  </div></div>`;
+};
+
+V['purchase-new'] = () => head('Buy minerals', 'A supplier brings minerals. Weigh, fill in, and the payout is calculated.') + `
+  <div class="grid g-2">
+    <div class="card"><h2>Purchase details</h2><form class="form" id="buyForm">
+      <div class="field"><label for="b-sup">Supplier</label><select id="b-sup">${suppliers.map(s => `<option value="${s.id}">${s.name} (${s.id})</option>`).join('')}</select></div>
+      <div class="field"><label for="b-min">Mineral</label><select id="b-min">${minerals.map((m, i) => `<option value="${i}">${m.name}</option>`).join('')}</select></div>
+      <div class="field"><label for="b-gross">Gross weight (kg)</label><input id="b-gross" type="number" step="0.1" value="120"></div>
+      <div class="field"><label for="b-ded">Deduction for water and dirt (%)</label><input id="b-ded" type="number" step="0.5" value="4"></div>
+      <div class="field"><label for="b-grade">Grade tested (%)</label><input id="b-grade" type="number" step="0.1" value="64"></div>
+      <div class="field"><label for="b-price">Price per kg ($)</label><input id="b-price" type="number" step="0.01" value="14.20"></div>
+      <div class="field full"><label for="b-store">Put into stockpile</label><select id="b-store">${stockpiles.filter(s => s.kind !== 'Own mining').map(s => `<option>${s.name}</option>`).join('')}</select></div>
+      <label class="check field full" for="b-adv"><input id="b-adv" type="checkbox" checked> Deduct this supplier's open advances from the payout</label>
+    </form></div>
+    <div class="card"><h2>Calculation</h2><div class="calc" id="buyCalc"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">${save('Save and print receipt')}<button class="btn" data-save="Draft saved">Save as draft</button></div>
+    </div>
+  </div>`;
+function buyCalc() {
+  const s = suppliers.find(x => x.id === document.getElementById('b-sup').value);
+  const gross = +document.getElementById('b-gross').value || 0;
+  const ded = +document.getElementById('b-ded').value || 0;
+  const price = +document.getElementById('b-price').value || 0;
+  const net = gross * (1 - ded / 100);
+  const total = net * price;
+  const useAdv = document.getElementById('b-adv').checked;
+  const advDeduct = useAdv ? Math.min(s.open, total) : 0;
+  const row = (a, b) => `<div class="calc-row"><span>${a}</span><span>${b}</span></div>`;
+  document.getElementById('buyCalc').innerHTML =
+    row('Gross weight', kg(gross)) + row(`Deduction (${ded}%)`, '− ' + kg(gross - net)) + row('Net weight', kg(net)) +
+    row('Price per kg', usd2(price)) + row('Purchase amount', usd2(total)) +
+    row(`Open advances (${s.name})`, usd2(s.open)) + row('Deducted now', '− ' + usd2(advDeduct)) +
+    (useAdv && s.open > total ? row('Advance still open after this', usd2(s.open - total)) : '') +
+    `<div class="calc-row total"><span>Pay to supplier</span><span>${usd2(total - advDeduct)}</span></div>`;
+}
+
+V.purchases = () => head('Purchase list', 'Every purchase from suppliers, newest first.', go('purchase-new', 'Buy minerals', 'btn primary')) +
+  `<div class="card">${table([
+    { h: 'No.', f: r => r.no }, { h: 'Date', f: r => r.date }, { h: 'Supplier', f: r => r.sup }, { h: 'Mineral', f: r => r.min },
+    { h: 'Net', num: 1, f: r => kg(r.net) }, { h: 'Amount', num: 1, f: r => usd(r.total) }, { h: 'Advance deducted', num: 1, f: r => r.adv ? usd(r.adv) : '–' },
+    { h: 'Paid out', num: 1, f: r => usd(r.total - r.adv) }, { h: 'Status', f: r => statusChip(r.status) }
+  ], purchases)}</div>`;
+
+V.suppliers = () => head('Suppliers', 'People and groups who bring minerals to sell.', save('Add supplier')) +
+  `<div class="card">${table([
+    { h: 'ID', f: r => r.id }, { h: 'Name', f: r => `<b>${r.name}</b>` }, { h: 'Phone', f: r => r.phone }, { h: 'Mine site', f: r => r.site },
+    { h: 'Bought this year', num: 1, f: r => usd(r.bought) }, { h: 'Open advance', num: 1, f: r => r.open ? `<span class="down">${usd(r.open)}</span>` : '–' }
+  ], suppliers)}</div>`;
+
+V['advance-new'] = () => head('Give advance', 'Money or goods given before the supplier delivers. Deducted automatically at their next purchase.') + `
+  <div class="card" style="max-width:640px"><form class="form">
+    <div class="field"><label for="a-sup">Supplier</label><select id="a-sup">${opts(suppliers.map(s => s.name))}</select></div>
+    <div class="field"><label for="a-type">Type</label><select id="a-type">${opts(['Cash', 'Fuel', 'Tools', 'Food', 'Other'])}</select></div>
+    <div class="field"><label for="a-amt">Amount ($)</label><input id="a-amt" type="number" value="200"></div>
+    <div class="field"><label for="a-date">Date</label><input id="a-date" type="date" value="2026-11-14"></div>
+    <div class="field full"><label for="a-note">Note</label><input id="a-note" placeholder="For example: 40 L diesel for pump"></div>
+  </form><div style="margin-top:14px">${save('Save advance')}</div></div>`;
+
+V.advances = () => head('Open advances', 'Not yet repaid. Oldest first.', go('advance-new', 'Give advance', 'btn primary')) + `
+  <div class="grid g-kpi"><div class="card kpi"><span class="label">Total open</span><span class="value">${usd(1950)}</span></div>
+  <div class="card kpi"><span class="label">Older than 30 days</span><span class="value down">${usd(800)}</span></div></div>
+  <div class="card">${table([
+    { h: 'No.', f: r => r.no }, { h: 'Date', f: r => r.date }, { h: 'Supplier', f: r => r.sup }, { h: 'Type', f: r => r.type },
+    { h: 'Amount', num: 1, f: r => usd(r.amount) }, { h: 'Days open', num: 1, f: r => r.age > 30 ? chip(r.age + ' days', 'bad') : r.age + ' days' }
+  ], advances)}</div>`;
+
+V['sale-new'] = () => head('New sale', 'Sell minerals to a buyer. Stock goes down automatically.') + `
+  <div class="card" style="max-width:720px"><form class="form" id="saleForm">
+    <div class="field"><label for="s-buyer">Buyer</label><select id="s-buyer">${opts(buyers.map(b => b.name))}</select></div>
+    <div class="field"><label for="s-pile">From stockpile</label><select id="s-pile">${opts(stockpiles.filter(s => s.kind !== 'Own mining').map(s => s.name))}</select></div>
+    <div class="field"><label for="s-qty">Quantity (kg)</label><input id="s-qty" type="number" value="1000"></div>
+    <div class="field"><label for="s-price">Price per kg ($)</label><input id="s-price" type="number" step="0.01" value="18.90"></div>
+    <div class="field full"><label for="s-total">Total</label><input id="s-total" readonly></div>
+  </form><div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">${save('Save sale')}<button class="btn" data-save="Invoice created">Make invoice</button></div></div>`;
+
+V.sales = () => head('Sales list', 'Minerals sold to buyers.', go('sale-new', 'New sale', 'btn primary')) +
+  `<div class="card">${table([
+    { h: 'No.', f: r => r.no }, { h: 'Date', f: r => r.date }, { h: 'Buyer', f: r => r.buyer }, { h: 'Mineral', f: r => r.min },
+    { h: 'Quantity', num: 1, f: r => kg(r.qty) }, { h: 'Price/kg', num: 1, f: r => usd2(r.price) }, { h: 'Total', num: 1, f: r => usd(r.qty * r.price) }, { h: 'Status', f: r => statusChip(r.status) }
+  ], sales)}</div>`;
+
+V.buyers = () => head('Buyers', 'Companies that buy minerals from us.', save('Add buyer')) +
+  `<div class="card">${table([
+    { h: 'Name', f: r => `<b>${r.name}</b>` }, { h: 'Contact', f: r => r.contact }, { h: 'Type', f: r => r.country },
+    { h: 'Sold this year', num: 1, f: r => usd(r.sold) }, { h: 'Still owes us', num: 1, f: r => r.open ? `<span class="down">${usd(r.open)}</span>` : '–' }
+  ], buyers)}</div>`;
+
+V.stock = () => head('Stock overview', 'How much is in each stockpile right now.', go('stock-move', 'Add or remove stock', 'btn primary')) + `
+  <div class="grid g-2e">${stockpiles.map(s => `<div class="card"><h2>${s.name} ${chip(s.kind, 'neutral')}</h2>
+    <div class="kpi"><span class="value">${t(s.qty)}</span><span class="note">of ${t(s.cap)} space · ${Math.round(s.qty / s.cap * 100)}% full</span></div>
+    <div class="bar-row" style="margin-top:10px"><div class="track"><div class="fill ${s.kind === 'Own mining' ? '' : 'gold'}" style="width:${Math.min(100, s.qty / s.cap * 100)}%"></div></div></div></div>`).join('')}</div>
+  <div class="card"><h2>Recent movements</h2>${table([
+    { h: 'Date', f: r => r.date }, { h: 'Stockpile', f: r => r.pile }, { h: 'In / out', f: r => chip(r.dir, r.dir === 'In' ? 'good' : 'warn') },
+    { h: 'Quantity', num: 1, f: r => t(r.qty) }, { h: 'Reason', f: r => r.reason }, { h: 'By', f: r => r.by }
+  ], moves)}</div>`;
+
+V['stock-move'] = () => head('Add or remove stock', 'For example: sand dug today, sand sent to the washing plant, or a correction after weighing.') + `
+  <div class="card" style="max-width:640px"><form class="form">
+    <div class="field"><label for="m-pile">Stockpile</label><select id="m-pile">${opts(stockpiles.map(s => s.name))}</select></div>
+    <div class="field"><label for="m-dir">In or out</label><select id="m-dir">${opts(['In (add)', 'Out (remove)'])}</select></div>
+    <div class="field"><label for="m-qty">Quantity (tonnes)</label><input id="m-qty" type="number" step="0.1" value="20"></div>
+    <div class="field"><label for="m-date">Date</label><input id="m-date" type="date" value="2026-11-14"></div>
+    <div class="field full"><label for="m-why">Reason</label><select id="m-why">${opts(['Excavation', 'To washing plant', 'Correction after weighing', 'Other'])}</select></div>
+  </form><div style="margin-top:14px">${save('Save movement')}</div></div>`;
+
+V['expense-new'] = () => head('Add expense', 'Daily costs such as food, fuel and gas.') + `
+  <div class="card" style="max-width:640px"><form class="form">
+    <div class="field"><label for="e-cat">Category</label><select id="e-cat">${opts(expenseCats)}</select></div>
+    <div class="field"><label for="e-amt">Amount ($)</label><input id="e-amt" type="number" value="50"></div>
+    <div class="field"><label for="e-date">Date</label><input id="e-date" type="date" value="2026-11-14"></div>
+    <div class="field"><label for="e-by">Paid by</label><select id="e-by">${opts(staff.map(s => s.name))}</select></div>
+    <div class="field full"><label for="e-desc">What was it for?</label><input id="e-desc" placeholder="For example: diesel for excavator, 80 L"></div>
+    <div class="field full"><label for="e-photo">Photo of receipt (optional)</label><input id="e-photo" type="file" accept="image/*"></div>
+  </form><div style="margin-top:14px">${save('Save expense')}</div></div>`;
+
+let expFilter = 'All';
+V.expenses = () => {
+  const list = expenses.filter(e => expFilter === 'All' || e.cat === expFilter);
+  const byCat = expenseCats.map(c => ({ c, v: expenses.filter(e => e.cat === c).reduce((a, e) => a + e.amount, 0) })).filter(x => x.v);
+  const maxV = Math.max(...byCat.map(x => x.v));
+  return head('Daily expenses', 'This week · filter by category.', go('expense-new', 'Add expense', 'btn primary')) + `
+  <div class="filters" id="expFilters">${['All', ...expenseCats].map(c => `<button class="${c === expFilter ? 'on' : ''}" data-cat="${c}">${c}</button>`).join('')}</div>
+  <div class="grid g-2">
+    <div class="card">${table([
+      { h: 'Date', f: r => r.date }, { h: 'Category', f: r => chip(r.cat, 'neutral') }, { h: 'Description', f: r => r.desc }, { h: 'Paid by', f: r => r.by }, { h: 'Amount', num: 1, f: r => usd(r.amount) }
+    ], list)}<div class="calc-row total" style="margin-top:6px"><span>Total</span><span>${usd(list.reduce((a, e) => a + e.amount, 0))}</span></div></div>
+    <div class="card"><h2>Per category this week</h2><div class="bars">${byCat.map(x => `
+      <div class="bar-row"><span>${x.c}</span><span class="v">${usd(x.v)}</span><div class="track"><div class="fill gold" style="width:${x.v / maxV * 100}%"></div></div></div>`).join('')}</div></div>
+  </div>`;
+};
+
+V.staff = () => head('Staff list', '18 employees · 7 shown in this example.', save('Add employee')) +
+  `<div class="card">${table([
+    { h: 'Name', f: r => `<b>${r.name}</b>` }, { h: 'Job', f: r => r.role }, { h: 'Started', f: r => r.start },
+    { h: 'Monthly salary', num: 1, f: r => usd(r.salary) }, { h: 'Days off left', num: 1, f: r => r.leaveLeft }, { h: 'Today', f: r => statusChip(r.status) }
+  ], staff)}</div>`;
+
+V.payroll = () => {
+  const rows = staff.map((s, i) => ({ ...s, adv: [0, 50, 0, 80, 0, 30, 0][i], bonus: [40, 0, 0, 0, 0, 0, 20][i] }));
+  return head('Salaries', 'November 2026 · pay date 30 November.', save('Mark all as paid')) + `
+  <div class="grid g-kpi">
+    <div class="card kpi"><span class="label">Total to pay</span><span class="value">${usd(7240)}</span><span class="note">18 employees</span></div>
+    <div class="card kpi"><span class="label">Salary advances</span><span class="value">${usd(160)}</span><span class="note">Deducted this month</span></div>
+    <div class="card kpi"><span class="label">Paid so far</span><span class="value">${usd(0)}</span></div>
+  </div>
+  <div class="card">${table([
+    { h: 'Name', f: r => r.name }, { h: 'Job', f: r => r.role }, { h: 'Salary', num: 1, f: r => usd(r.salary) },
+    { h: 'Bonus', num: 1, f: r => r.bonus ? '+ ' + usd(r.bonus) : '–' }, { h: 'Salary advance', num: 1, f: r => r.adv ? '− ' + usd(r.adv) : '–' },
+    { h: 'To pay', num: 1, f: r => `<b>${usd(r.salary + r.bonus - r.adv)}</b>` }, { h: 'Status', f: () => statusChip('Unpaid') }
+  ], rows)}</div>`;
+};
+
+V.leave = () => head('Days off', 'Requests, sick days and remaining days per employee.', save('Add day off')) + `
+  <div class="card"><h2>Requests</h2>${table([
+    { h: 'Employee', f: r => r.name }, { h: 'Type', f: r => statusChip(r.type) }, { h: 'From', f: r => r.from }, { h: 'To', f: r => r.to },
+    { h: 'Days', num: 1, f: r => r.days }, { h: 'Status', f: r => statusChip(r.status) },
+    { h: '', f: r => r.status === 'Waiting' ? `<button class="btn" data-save="Approved">Approve</button>` : '' }
+  ], leaves)}</div>
+  <div class="card"><h2>Days off left this year</h2><div class="bars">${staff.map(s => `
+    <div class="bar-row"><span>${s.name}</span><span class="v">${s.leaveLeft} of 18</span><div class="track"><div class="fill" style="width:${s.leaveLeft / 18 * 100}%"></div></div></div>`).join('')}</div></div>`;
+
+V.cash = () => {
+  let bal = 3303;
+  const rows = [...cashbook].reverse().map(r => { bal += r.inn - r.out; return { ...r, bal }; }).reverse();
+  return head('Cash in and out', 'Every movement of cash. The balance should match the safe.', save('Count the safe')) + `
+  <div class="grid g-kpi">
+    <div class="card kpi"><span class="label">Balance now</span><span class="value">${usd(rows[0].bal)}</span></div>
+    <div class="card kpi"><span class="label">In this week</span><span class="value up">${usd(23590)}</span></div>
+    <div class="card kpi"><span class="label">Out this week</span><span class="value down">${usd(8481)}</span></div>
+  </div>
+  <div class="card">${table([
+    { h: 'Date', f: r => r.date }, { h: 'Description', f: r => r.desc }, { h: 'In', num: 1, f: r => r.inn ? `<span class="up">${usd(r.inn)}</span>` : '' },
+    { h: 'Out', num: 1, f: r => r.out ? `<span class="down">${usd(r.out)}</span>` : '' }, { h: 'Balance', num: 1, f: r => usd(r.bal) }
+  ], rows)}</div>`;
+};
+
+V.statement = () => head('Supplier statement', 'Everything with one supplier: purchases, advances and payments.', `<button class="btn" data-save="Shared by WhatsApp">Share by WhatsApp</button>`) + `
+  <div class="card"><div class="form" style="max-width:520px"><div class="field"><label for="st-sup">Supplier</label><select id="st-sup">${opts(['Kibo Miners Co-op'])}</select></div>
+  <div class="field"><label for="st-per">Period</label><select id="st-per">${opts(['October – November 2026'])}</select></div></div></div>
+  <div class="card">${table([
+    { h: 'Date', f: r => r[0] }, { h: 'What', f: r => r[1] }, { h: 'Bought', num: 1, f: r => r[2] ? usd(r[2]) : '' },
+    { h: 'Advance', num: 1, f: r => r[3] ? usd(r[3]) : '' }, { h: 'Paid', num: 1, f: r => r[4] ? usd(r[4]) : '' }, { h: 'Advance open', num: 1, f: r => usd(r[5]) }
+  ], [
+    ['02 Oct', 'Advance A-208 (cash)', 0, 800, 0, 800], ['20 Oct', 'Advance A-214 (fuel)', 0, 400, 0, 1200],
+    ['31 Oct', 'Purchase P-1102 · 380 kg tin', 5396, 0, 5396, 1200], ['14 Nov', 'Purchase P-1187 · 412.5 kg tin', 5857, 0, 5857, 1200]
+  ])}<div class="calc-row total" style="margin-top:6px"><span>Still open</span><span>${usd(1200)}</span></div></div>`;
+
+V.monthly = () => {
+  const lines = [['Sales', 45360, 1], ['Purchases from suppliers', -52480, 0], ['Daily expenses', -3264, 0], ['Salaries', -7240, 0]];
+  const stockValue = 21800;
+  return head('Monthly summary', 'November 2026 so far.') + `
+  <div class="grid g-2">
+    <div class="card"><h2>Money in and out</h2><div class="calc">${lines.map(l => `<div class="calc-row"><span>${l[0]}</span><span class="${l[1] < 0 ? 'down' : 'up'}">${l[1] < 0 ? '− ' : ''}${usd(Math.abs(l[1]))}</span></div>`).join('')}
+      <div class="calc-row"><span>Stock value increase (bought, not yet sold)</span><span class="up">${usd(stockValue)}</span></div>
+      <div class="calc-row total"><span>Result</span><span>${usd(45360 - 52480 - 3264 - 7240 + stockValue)}</span></div></div></div>
+    <div class="card"><h2>Expenses by type</h2><div class="bars">${[['Fuel', 1420], ['Food', 980], ['Repairs', 410], ['Gas', 214], ['Transport', 240]].map(x => `
+      <div class="bar-row"><span>${x[0]}</span><span class="v">${usd(x[1])}</span><div class="track"><div class="fill gold" style="width:${x[1] / 1420 * 100}%"></div></div></div>`).join('')}</div></div>
+  </div>`;
+};
+
+V.users = () => head('Users and roles', 'Who can log in and what they may do.', save('Invite user')) +
+  `<div class="card">${table([
+    { h: 'Name', f: r => r[0] }, { h: 'Role', f: r => chip(r[1], 'neutral') }, { h: 'Can do', f: r => r[2] }, { h: 'Last login', f: r => r[3] }
+  ], [
+    ['Ama Mensah', 'Owner', 'Everything', 'Today 07:42'], ['Ruth Kamau', 'Cashier', 'Purchases, advances, cash, expenses', 'Today 08:10'],
+    ['David Banda', 'Store keeper', 'Stockpiles, purchases (no payments)', 'Yesterday'], ['Peter Nkosi', 'Supervisor', 'Expenses, stock, days off', 'Today 06:55']
+  ])}</div>`;
+
+V.minerals = () => head('Minerals and prices', 'Today\'s buying prices. Change them when the market moves.', save('Save prices')) +
+  `<div class="card">${table([
+    { h: 'Mineral', f: r => `<b>${r.name}</b>` }, { h: 'Reference grade', f: r => r.grade }, { h: 'Unit', f: r => r.unit },
+    { h: 'Buying price', num: 1, f: r => usd2(r.price) + ' / ' + r.unit }
+  ], minerals)}</div>`;
+
+// ---------- Router ----------
+const label = {};
+NAV.forEach(n => n.children ? n.children.forEach(c => label[c.id] = [n.label, c.label]) : label[n.id] = [null, n.label]);
+const openGroups = new Set();
+
+function renderNav(active) {
+  document.getElementById('nav').innerHTML = NAV.map((n, gi) => {
+    if (!n.children) return `<a class="nav-item ${active === n.id ? 'active' : ''}" href="#${n.id}">${svg(I[n.icon])}${n.label}</a>`;
+    const open = openGroups.has(gi);
+    return `<div class="nav-group ${open ? 'open' : ''}"><button data-group="${gi}" aria-expanded="${open}">${svg(I[n.icon])}${n.label}${svg(I.chev, 'chev')}</button>
+      <div class="sub">${n.children.map(c => `<a href="#${c.id}" class="${active === c.id ? 'active' : ''}">${c.label}</a>`).join('')}</div></div>`;
+  }).join('');
+}
+
+function route() {
+  const id = V[location.hash.slice(1)] ? location.hash.slice(1) : 'dashboard';
+  NAV.forEach((n, gi) => { if (n.children && n.children.some(c => c.id === id)) openGroups.add(gi); });
+  renderNav(id);
+  const [grp, name] = label[id];
+  document.getElementById('crumb').innerHTML = grp ? `${grp} / <b>${name}</b>` : `<b>${name}</b>`;
+  document.getElementById('view').innerHTML = V[id]();
+  document.getElementById('app').classList.remove('menu-open');
+  if (id === 'purchase-new') { buyCalc(); document.getElementById('buyForm').addEventListener('input', buyCalc); }
+  if (id === 'sale-new') {
+    const f = () => { document.getElementById('s-total').value = usd2((+document.getElementById('s-qty').value || 0) * (+document.getElementById('s-price').value || 0)); };
+    f(); document.getElementById('saleForm').addEventListener('input', f);
+  }
+  window.scrollTo(0, 0);
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg + ' (example only, nothing stored)';
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 2400);
+}
+
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-group]');
+  if (g) { const i = +g.dataset.group; openGroups.has(i) ? openGroups.delete(i) : openGroups.add(i); renderNav(location.hash.slice(1) || 'dashboard'); return; }
+  const go = e.target.closest('[data-go]');
+  if (go) { location.hash = go.dataset.go; return; }
+  const s = e.target.closest('[data-save]');
+  if (s) { e.preventDefault(); toast(s.dataset.save); return; }
+  const c = e.target.closest('[data-cat]');
+  if (c) { expFilter = c.dataset.cat; route(); return; }
+});
+document.getElementById('menuBtn').addEventListener('click', () => document.getElementById('app').classList.add('menu-open'));
+document.getElementById('scrim').addEventListener('click', () => document.getElementById('app').classList.remove('menu-open'));
+document.addEventListener('submit', e => e.preventDefault());
+window.addEventListener('hashchange', route);
+route();
+</script>
+
+</html>
