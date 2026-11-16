@@ -9,45 +9,30 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: fixed left sidebar with collapsible groups, content area with page header + cards. */
+/* Layout: left sidebar with collapsible groups; content = page header + spreadsheet-style sheets and summary cards. */
 :root {
-  --bg: #f3f4f1;
-  --surface: #ffffff;
-  --surface-2: #eceee9;
-  --line: #d9dcd4;
-  --fg: #1d221f;
-  --muted: #5f675f;
-  --side-bg: #1f2a26;
-  --side-fg: #c9d2cc;
-  --side-hover: #2b3833;
-  --side-active: #34443e;
-  --accent: #b7791f;      /* ore gold */
-  --accent-soft: #f4e6cc;
-  --good: #2f7d4f;
-  --good-soft: #dcefe2;
-  --warn: #a8641a;
-  --warn-soft: #f6e5cf;
-  --bad: #b23a32;
-  --bad-soft: #f6dcd9;
-  --chart-a: #b7791f;
-  --chart-b: #3e6b5c;
+  --bg: #f3f4f1; --surface: #ffffff; --surface-2: #eceee9; --line: #d9dcd4; --grid: #d3d7cf; --head: #e3e8df; --calc: #f6f7f3;
+  --fg: #1d221f; --muted: #5f675f;
+  --side-bg: #1f2a26; --side-fg: #c9d2cc; --side-hover: #2b3833; --side-active: #34443e;
+  --accent: #b7791f; --accent-soft: #f4e6cc;
+  --in: #2f7d4f; --in-soft: #dcefe2; --out: #b23a32; --out-soft: #f6dcd9; --warn: #a8641a; --warn-soft: #f6e5cf;
   --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --f-body: "IBM Plex Sans", "Segoe UI", Roboto, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #141917; --surface: #1c2320; --surface-2: #232b28; --line: #313b37; --fg: #e6ebe7; --muted: #9aa59e;
-    --side-bg: #101513; --side-fg: #b9c4bd; --side-hover: #1d2522; --side-active: #27322e;
-    --accent: #e0a446; --accent-soft: #3b2f1c; --good: #6cc08d; --good-soft: #1d3326; --warn: #e3a35a; --warn-soft: #3a2c1b;
-    --bad: #ec7d74; --bad-soft: #3d2220; --chart-a: #e0a446; --chart-b: #79b5a1; color-scheme: dark;
+    --bg: #141917; --surface: #1c2320; --surface-2: #232b28; --line: #313b37; --grid: #34403b; --head: #26302c; --calc: #19201d;
+    --fg: #e6ebe7; --muted: #9aa59e; --side-bg: #101513; --side-fg: #b9c4bd; --side-hover: #1d2522; --side-active: #27322e;
+    --accent: #e0a446; --accent-soft: #3b2f1c; --in: #6cc08d; --in-soft: #1d3326; --out: #ec7d74; --out-soft: #3d2220; --warn: #e3a35a; --warn-soft: #3a2c1b;
+    color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #141917; --surface: #1c2320; --surface-2: #232b28; --line: #313b37; --fg: #e6ebe7; --muted: #9aa59e;
-  --side-bg: #101513; --side-fg: #b9c4bd; --side-hover: #1d2522; --side-active: #27322e;
-  --accent: #e0a446; --accent-soft: #3b2f1c; --good: #6cc08d; --good-soft: #1d3326; --warn: #e3a35a; --warn-soft: #3a2c1b;
-  --bad: #ec7d74; --bad-soft: #3d2220; --chart-a: #e0a446; --chart-b: #79b5a1; color-scheme: dark;
+  --bg: #141917; --surface: #1c2320; --surface-2: #232b28; --line: #313b37; --grid: #34403b; --head: #26302c; --calc: #19201d;
+  --fg: #e6ebe7; --muted: #9aa59e; --side-bg: #101513; --side-fg: #b9c4bd; --side-hover: #1d2522; --side-active: #27322e;
+  --accent: #e0a446; --accent-soft: #3b2f1c; --in: #6cc08d; --in-soft: #1d3326; --out: #ec7d74; --out-soft: #3d2220; --warn: #e3a35a; --warn-soft: #3a2c1b;
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -56,20 +41,22 @@ button, input, select { font: inherit; color: inherit; }
 .app { display: flex; min-height: 100%; }
 
 /* Sidebar */
-.side { width: 248px; flex-shrink: 0; background: var(--side-bg); color: var(--side-fg); display: flex; flex-direction: column;
+.side { width: 250px; flex-shrink: 0; background: var(--side-bg); color: var(--side-fg); display: flex; flex-direction: column;
   position: sticky; top: 0; height: 100vh; overflow-y: auto; padding-left: env(safe-area-inset-left, 0px); }
 .brand { display: flex; align-items: center; gap: 10px; padding: 18px 18px 14px; }
 .brand-mark { width: 30px; height: 30px; border-radius: 7px; background: var(--accent); display: grid; place-items: center; color: #1a1408; }
-.brand-name { font-family: var(--f-display); font-weight: 700; font-size: 17px; color: #fff; letter-spacing: .01em; }
-.brand-sub { font-size: 11px; color: var(--side-fg); opacity: .7; }
+.brand-name { font-family: var(--f-display); font-weight: 700; font-size: 17px; color: #fff; }
+.brand-sub { font-size: 11px; opacity: .7; }
 .nav { display: flex; flex-direction: column; gap: 2px; padding: 6px 10px 20px; }
 .nav-item, .nav-group > button { display: flex; align-items: center; gap: 11px; width: 100%; border: 0; background: none; color: var(--side-fg);
-  padding: 10px 10px; border-radius: 7px; cursor: pointer; text-align: left; font-weight: 500; text-decoration: none; }
+  padding: 10px; border-radius: 7px; cursor: pointer; text-align: left; font-weight: 500; text-decoration: none; }
 .nav-item:hover, .nav-group > button:hover { background: var(--side-hover); color: #fff; }
 .nav-item:focus-visible, .nav-group > button:focus-visible, .sub a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.nav-item.active, .nav-group.open > button { color: #fff; }
-.nav-item.active { background: var(--side-active); }
+.nav-item.active { background: var(--side-active); color: #fff; }
+.nav-group.open > button { color: #fff; }
 .nav svg { width: 18px; height: 18px; flex-shrink: 0; }
+.nav .tag { font-size: 10.5px; font-weight: 600; padding: 1px 6px; border-radius: 99px; margin-left: 2px; }
+.tag.in { background: var(--in); color: #fff; } .tag.out { background: var(--out); color: #fff; }
 .chev { margin-left: auto; transition: transform .15s; opacity: .6; width: 14px !important; height: 14px !important; }
 .nav-group.open .chev { transform: rotate(90deg); }
 .sub { display: none; flex-direction: column; gap: 1px; padding: 2px 0 6px 39px; }
@@ -77,8 +64,7 @@ button, input, select { font: inherit; color: inherit; }
 .sub a { color: var(--side-fg); text-decoration: none; padding: 7px 10px; border-radius: 6px; font-size: 13.5px; }
 .sub a:hover { background: var(--side-hover); color: #fff; }
 .sub a.active { color: #fff; background: var(--side-active); box-shadow: inset 2px 0 0 var(--accent); }
-.side-foot { margin-top: auto; padding: 14px 18px; border-top: 1px solid var(--side-hover); font-size: 12px; display: flex; gap: 10px; align-items: center; }
-.avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--side-active); display: grid; place-items: center; color: #fff; font-weight: 600; font-size: 12px; }
+.side-foot { margin-top: auto; padding: 14px 18px; border-top: 1px solid var(--side-hover); font-size: 12px; opacity: .8; }
 
 /* Main */
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -86,108 +72,131 @@ button, input, select { font: inherit; color: inherit; }
   display: flex; align-items: center; gap: 12px; padding-block: 12px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .menu-btn { display: none; border: 1px solid var(--line); background: var(--surface); border-radius: 7px; padding: 6px 8px; cursor: pointer; }
-.crumb { color: var(--muted); font-size: 13px; }
+.crumb { color: var(--muted); font-size: 13px; min-width: 0; }
 .crumb b { color: var(--fg); font-weight: 600; }
-.topbar .spacer { flex: 1; }
-.example-pill { font-size: 11.5px; padding: 3px 9px; border-radius: 99px; background: var(--accent-soft); color: var(--warn); font-weight: 600; letter-spacing: .02em; }
-.content { padding-block: 22px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  max-width: 1200px; width: 100%; display: flex; flex-direction: column; gap: 18px; }
+.spacer { flex: 1; }
+.test-pill { font-size: 11.5px; padding: 3px 9px; border-radius: 99px; background: var(--accent-soft); color: var(--warn); font-weight: 600; white-space: nowrap; }
+.content { padding-block: 22px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  max-width: 1240px; width: 100%; display: flex; flex-direction: column; gap: 18px; }
 .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
 .page-head h1 { font-family: var(--f-display); font-size: 24px; font-weight: 700; margin: 0; text-wrap: balance; }
-.page-head p { margin: 2px 0 0; color: var(--muted); }
-.page-head .actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.page-head p { margin: 2px 0 0; color: var(--muted); max-width: 70ch; }
+.page-head .actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
-.btn { border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 500; }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
 .btn:hover { border-color: var(--muted); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #1a1408; font-weight: 600; }
-.btn.primary:hover { filter: brightness(1.05); }
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+select.btn { padding-right: 10px; }
 
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
-.card h2 { font-family: var(--f-display); font-size: 15px; font-weight: 600; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+.card h2 { font-family: var(--f-display); font-size: 15px; font-weight: 600; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .card h2 .link { margin-left: auto; font-family: var(--f-body); font-size: 12.5px; font-weight: 500; color: var(--accent); text-decoration: none; }
 .grid { display: grid; gap: 14px; }
-.g-kpi { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.g-kpi { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
 .g-2 { grid-template-columns: 2fr 1fr; }
 .g-2e { grid-template-columns: 1fr 1fr; }
 .kpi { display: flex; flex-direction: column; gap: 4px; }
-.kpi .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 500; }
-.kpi .value { font-family: var(--f-display); font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.kpi .note { font-size: 12.5px; color: var(--muted); }
-.up { color: var(--good); } .down { color: var(--bad); }
+.label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 500; }
+.value { font-family: var(--f-display); font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.note { font-size: 12.5px; color: var(--muted); }
+.c-in { color: var(--in); } .c-out { color: var(--out); }
 
+/* Big money in / out cards */
+.big { display: flex; flex-direction: column; gap: 12px; text-decoration: none; color: inherit; border-width: 1px; transition: border-color .15s; }
+.big:hover { border-color: var(--muted); }
+.big .top { display: flex; align-items: center; gap: 10px; }
+.big .ic { width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; }
+.big.in .ic { background: var(--in-soft); color: var(--in); } .big.out .ic { background: var(--out-soft); color: var(--out); }
+.big .ic svg { width: 20px; height: 20px; }
+.big .title { font-family: var(--f-display); font-weight: 600; font-size: 16px; }
+.big .amount { font-family: var(--f-display); font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.big.in .amount { color: var(--in); } .big.out .amount { color: var(--out); }
+.big .open { margin-left: auto; font-size: 12.5px; color: var(--accent); font-weight: 500; }
+
+.lines { display: flex; flex-direction: column; gap: 9px; }
+.line { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; font-size: 13.5px; }
+.line .v { font-family: var(--f-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.line .track { grid-column: 1 / -1; height: 7px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+.line .fill { height: 100%; border-radius: 99px; background: var(--accent); }
+.line .fill.in { background: var(--in); } .line .fill.out { background: var(--out); }
+.result { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 16px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); gap: 10px; flex-wrap: wrap; }
+.result b { font-family: var(--f-display); font-size: 22px; font-variant-numeric: tabular-nums; }
+
+/* Read-only data tables */
 .table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-td { padding: 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-tr:last-child td { border-bottom: 0; }
-td.num, th.num { text-align: right; font-family: var(--f-mono); font-size: 13px; }
+table.data { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+table.data th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.data td { padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.data tr:last-child td { border-bottom: 0; }
+table.data .num { text-align: right; font-family: var(--f-mono); font-size: 13px; }
+table.data tfoot td { font-weight: 700; border-top: 2px solid var(--line); }
 .chip { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; }
-.chip.good { background: var(--good-soft); color: var(--good); }
-.chip.warn { background: var(--warn-soft); color: var(--warn); }
-.chip.bad { background: var(--bad-soft); color: var(--bad); }
-.chip.neutral { background: var(--surface-2); color: var(--muted); }
+.chip.in { background: var(--in-soft); color: var(--in); } .chip.out { background: var(--out-soft); color: var(--out); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); } .chip.neutral { background: var(--surface-2); color: var(--muted); }
 
-.alerts { display: flex; flex-direction: column; gap: 8px; }
-.alert { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); }
-.alert .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
-.alert small { display: block; color: var(--muted); }
+/* Spreadsheet */
+.sheet-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.sheet-tools .hint { color: var(--muted); font-size: 12.5px; margin-left: auto; }
+.sheet-wrap { overflow: auto; border: 1px solid var(--grid); border-radius: 6px; background: var(--surface); max-height: 70vh; }
+table.sheet { border-collapse: collapse; width: max-content; min-width: 100%; font-variant-numeric: tabular-nums; }
+.sheet th, .sheet td { border: 1px solid var(--grid); padding: 0; height: 31px; white-space: nowrap; }
+.sheet thead th { position: sticky; z-index: 2; }
+.sheet .letters th { top: 0; height: 22px; background: var(--surface-2); color: var(--muted); font-size: 11px; font-weight: 500; text-align: center; }
+.sheet .names th { top: 22px; background: var(--head); font-weight: 600; font-size: 12.5px; padding: 0 8px; text-align: left; }
+.sheet .names th.r, .sheet td.calc { text-align: right; }
+.sheet .rn { width: 40px; min-width: 40px; background: var(--surface-2); color: var(--muted); text-align: center; font-size: 11.5px; position: relative; }
+.sheet .rn button { display: none; position: absolute; inset: 3px; border: 0; border-radius: 4px; background: var(--out-soft); color: var(--out); cursor: pointer; font-weight: 700; }
+.sheet tr:hover .rn button, .sheet .rn button:focus-visible { display: block; }
+.sheet input, .sheet select { width: 100%; height: 31px; border: 0; background: transparent; padding: 0 8px; outline: none; font-size: 13.5px; border-radius: 0; }
+.sheet input.n { text-align: right; font-family: var(--f-mono); font-size: 13px; }
+.sheet td:focus-within { outline: 2px solid var(--accent); outline-offset: -2px; position: relative; z-index: 1; background: var(--surface); }
+.sheet td.calc { background: var(--calc); padding: 0 8px; font-family: var(--f-mono); font-size: 13px; color: var(--muted); }
+.sheet td.calc.strong { color: var(--fg); font-weight: 600; }
+.sheet td.calc.owe { color: var(--out); font-weight: 600; }
+.sheet tfoot td { font-weight: 700; background: var(--surface-2); padding: 0 8px; position: sticky; bottom: 0; }
+.sheet tfoot td.num { text-align: right; font-family: var(--f-mono); font-size: 13px; }
+.legend-row { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+.legend-row i { display: inline-block; width: 12px; height: 12px; border: 1px solid var(--grid); vertical-align: -2px; margin-right: 5px; border-radius: 2px; }
 
-.bars { display: flex; flex-direction: column; gap: 12px; }
-.bar-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; }
-.bar-row .track { grid-column: 1 / -1; height: 9px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
-.bar-row .fill { height: 100%; background: var(--chart-b); border-radius: 99px; }
-.bar-row .fill.gold { background: var(--chart-a); }
-.bar-row .v { font-family: var(--f-mono); font-size: 13px; }
-
+/* Settings form */
 .form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .field { display: flex; flex-direction: column; gap: 5px; }
-.field.full { grid-column: 1 / -1; }
 .field label { font-size: 12.5px; font-weight: 600; color: var(--muted); }
-.field input, .field select { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 9px 11px; min-width: 0; }
-.field input:focus, .field select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
-.calc { display: flex; flex-direction: column; gap: 0; }
-.calc-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px dashed var(--line); gap: 10px; }
-.calc-row span:last-child { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
-.calc-row.total { border-bottom: 0; padding-top: 14px; font-weight: 700; font-size: 18px; }
-.calc-row.total span:last-child { color: var(--accent); }
-.check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
-
-.filters { display: flex; gap: 6px; flex-wrap: wrap; }
-.filters button { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 5px 12px; cursor: pointer; font-size: 13px; }
-.filters button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.field input { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 9px 11px; min-width: 0; font-family: var(--f-mono); }
+.field input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+.field small { color: var(--muted); }
 
 .chart svg { width: 100%; height: auto; display: block; }
-.legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+.legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--muted); margin-top: 6px; flex-wrap: wrap; }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.callout { padding: 10px 12px; border-radius: 8px; background: var(--accent-soft); color: var(--fg); font-size: 13.5px; }
 
 .toast { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg);
   padding: 10px 16px; border-radius: 8px; font-weight: 500; z-index: 30; }
 .scrim { display: none; }
 
-@media (max-width: 900px) {
-  .g-2, .g-2e { grid-template-columns: 1fr; }
-}
+@media (max-width: 900px) { .g-2, .g-2e { grid-template-columns: 1fr; } }
 @media (max-width: 760px) {
-  .side { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; z-index: 20; transform: translateX(-100%); transition: transform .2s;
-    padding-top: env(safe-area-inset-top, 0px); }
+  .side { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; z-index: 20; transform: translateX(-100%); transition: transform .2s; padding-top: env(safe-area-inset-top, 0px); }
   .app.menu-open .side { transform: none; }
   .app.menu-open .scrim { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 15; }
   .menu-btn { display: inline-flex; }
   .form { grid-template-columns: 1fr; }
-  .example-pill { display: none; }
+  .test-pill { display: none; }
+  .big .amount { font-size: 28px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
 <div class="app" id="app">
-  <aside class="side" id="side" aria-label="Main menu">
+  <aside class="side" aria-label="Main menu">
     <div class="brand">
       <div class="brand-mark"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l6-11 4 6 3-4 5 9z"/></svg></div>
-      <div><div class="brand-name">MineLedger</div><div class="brand-sub">Office administration</div></div>
+      <div><div class="brand-name">MineLedger</div><div class="brand-sub">Gold office · Zambia</div></div>
     </div>
     <nav class="nav" id="nav"></nav>
-    <div class="side-foot"><div class="avatar">AM</div><div><div style="color:#fff;font-weight:600">A. Mensah</div><div style="opacity:.7">Owner</div></div></div>
+    <div class="side-foot">Test version. Changes are saved in this browser only.</div>
   </aside>
   <div class="scrim" id="scrim"></div>
   <div class="main">
@@ -195,423 +204,526 @@ td.num, th.num { text-align: right; font-family: var(--f-mono); font-size: 13px;
       <button class="menu-btn" id="menuBtn" aria-label="Open menu"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
       <div class="crumb" id="crumb"></div>
       <div class="spacer"></div>
-      <span class="example-pill">Prototype · example data</span>
+      <span class="test-pill">Test version · example data</span>
     </header>
     <main class="content" id="view"></main>
   </div>
 </div>
+<div id="lists"></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
+// ================= Icons & navigation =================
 const I = {
   home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
-  buy: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 21h16"/>',
+  in: '<path d="M12 21V9M7 14l5-5 5 5"/><path d="M4 3h16"/>',
+  out: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 21h16"/>',
   adv: '<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
-  sell: '<path d="M12 21V9M7 14l5-5 5 5"/><path d="M4 3h16"/>',
-  stock: '<path d="M2 20l7-12 4 6 3-4 6 10z"/>',
-  exp: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>',
-  staff: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
-  cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
-  rep: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
-  cog: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  stock: '<path d="M4 18l3-8h10l3 8z"/><path d="M8 10l2-5h4l2 5"/>',
+  cog: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
   chev: '<path d="M9 6l6 6-6 6"/>'
 };
-const svg = (p, cls='') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
-
+const svg = (p, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 const NAV = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'home' },
-  { label: 'Purchases', icon: 'buy', children: [
-    { id: 'purchase-new', label: 'Buy minerals' }, { id: 'purchases', label: 'Purchase list' }, { id: 'suppliers', label: 'Suppliers' } ] },
-  { label: 'Advances', icon: 'adv', children: [
-    { id: 'advance-new', label: 'Give advance' }, { id: 'advances', label: 'Open advances' } ] },
-  { label: 'Sales', icon: 'sell', children: [
-    { id: 'sale-new', label: 'New sale' }, { id: 'sales', label: 'Sales list' }, { id: 'buyers', label: 'Buyers' } ] },
-  { label: 'Stockpiles', icon: 'stock', children: [
-    { id: 'stock', label: 'Stock overview' }, { id: 'stock-move', label: 'Add or remove stock' } ] },
-  { label: 'Expenses', icon: 'exp', children: [
-    { id: 'expense-new', label: 'Add expense' }, { id: 'expenses', label: 'Daily expenses' } ] },
-  { label: 'Employees', icon: 'staff', children: [
-    { id: 'staff', label: 'Staff list' }, { id: 'payroll', label: 'Salaries' }, { id: 'leave', label: 'Days off' } ] },
-  { label: 'Cash book', icon: 'cash', children: [
-    { id: 'cash', label: 'Cash in and out' } ] },
-  { label: 'Reports', icon: 'rep', children: [
-    { id: 'statement', label: 'Supplier statement' }, { id: 'monthly', label: 'Monthly summary' } ] },
-  { label: 'Admin', icon: 'cog', children: [
-    { id: 'users', label: 'Users and roles' }, { id: 'minerals', label: 'Minerals and prices' } ] }
+  { id: 'dashboard', label: 'Overview', icon: 'home' },
+  { label: 'Money in', tag: 'in', icon: 'in', children: [
+    { id: 'sales', label: 'Sales sheet' }, { id: 'report-week', label: 'Weekly report' }, { id: 'report-month', label: 'Monthly report' } ] },
+  { label: 'Money out', tag: 'out', icon: 'out', children: [
+    { id: 'expenses', label: 'Daily expenses' }, { id: 'mercury', label: 'Mercury use' }, { id: 'salaries', label: 'Salaries' } ] },
+  { label: 'Customers', icon: 'adv', children: [
+    { id: 'intake', label: 'Gold brought in' }, { id: 'advances', label: 'Advances given' }, { id: 'balances', label: 'Customer balances' } ] },
+  { label: 'Gold stock', icon: 'stock', children: [ { id: 'stock', label: 'Stock now' } ] },
+  { label: 'Setup', icon: 'cog', children: [ { id: 'prices', label: 'Prices and fixed costs' }, { id: 'machines', label: 'Machines' } ] }
 ];
 
-// ---------- Example data ----------
-const usd = n => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-const usd2 = n => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const kg = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 }) + ' kg';
-const t = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 }) + ' t';
-
-const minerals = [
-  { name: 'Cassiterite (tin)', unit: 'kg', price: 14.2, grade: '65%' },
-  { name: 'Coltan', unit: 'kg', price: 38.5, grade: '30% Ta₂O₅' },
-  { name: 'Wolframite', unit: 'kg', price: 11.8, grade: '60% WO₃' }
-];
-const suppliers = [
-  { id: 'S-014', name: 'Joseph Mwamba', phone: '0812 345 567', site: 'Kalimbi pit 3', bought: 18450, open: 450 },
-  { id: 'S-022', name: 'Grace Uwase', phone: '0788 102 994', site: 'River site B', bought: 9320, open: 0 },
-  { id: 'S-031', name: 'Kibo Miners Co-op', phone: '0755 660 120', site: 'Kibo hill', bought: 41200, open: 1200 },
-  { id: 'S-037', name: 'Emmanuel Okello', phone: '0701 448 310', site: 'Nyange pit 1', bought: 6100, open: 300 },
-  { id: 'S-040', name: 'Fatuma Said', phone: '0766 900 215', site: 'River site A', bought: 3880, open: 0 }
-];
-const purchases = [
-  { no: 'P-1187', date: '14 Nov', sup: 'Kibo Miners Co-op', min: 'Cassiterite (tin)', net: 412.5, total: 5857, adv: 0, status: 'Paid' },
-  { no: 'P-1186', date: '14 Nov', sup: 'Joseph Mwamba', min: 'Coltan', net: 38.2, total: 1471, adv: 450, status: 'Paid' },
-  { no: 'P-1185', date: '13 Nov', sup: 'Grace Uwase', min: 'Cassiterite (tin)', net: 96.0, total: 1363, adv: 0, status: 'Paid' },
-  { no: 'P-1184', date: '13 Nov', sup: 'Emmanuel Okello', min: 'Wolframite', net: 140.0, total: 1652, adv: 300, status: 'Unpaid' },
-  { no: 'P-1183', date: '12 Nov', sup: 'Fatuma Said', min: 'Cassiterite (tin)', net: 55.3, total: 785, adv: 0, status: 'Paid' }
-];
-const advances = [
-  { no: 'A-208', date: '02 Oct', sup: 'Kibo Miners Co-op', type: 'Cash', amount: 800, age: 43 },
-  { no: 'A-214', date: '20 Oct', sup: 'Kibo Miners Co-op', type: 'Fuel', amount: 400, age: 25 },
-  { no: 'A-217', date: '29 Oct', sup: 'Emmanuel Okello', type: 'Tools', amount: 300, age: 16 },
-  { no: 'A-219', date: '05 Nov', sup: 'Joseph Mwamba', type: 'Cash', amount: 450, age: 9 }
-];
-const buyers = [
-  { name: 'Lakeview Smelting Ltd', contact: 'R. Patel', country: 'Export', sold: 128400, open: 12500 },
-  { name: 'Eastern Metals Trading', contact: 'J. Kimani', country: 'Local', sold: 46200, open: 0 }
-];
-const sales = [
-  { no: 'V-062', date: '10 Nov', buyer: 'Lakeview Smelting Ltd', min: 'Cassiterite (tin)', qty: 2400, price: 18.9, status: 'Awaiting payment' },
-  { no: 'V-061', date: '28 Oct', buyer: 'Eastern Metals Trading', min: 'Wolframite', qty: 900, price: 15.1, status: 'Paid' },
-  { no: 'V-060', date: '15 Oct', buyer: 'Lakeview Smelting Ltd', min: 'Coltan', qty: 310, price: 52.0, status: 'Paid' }
-];
-const stockpiles = [
-  { name: 'Pit A raw sand', kind: 'Own mining', qty: 186.4, cap: 250, unit: 't' },
-  { name: 'Pit B raw sand', kind: 'Own mining', qty: 74.0, cap: 250, unit: 't' },
-  { name: 'Washed tin concentrate', kind: 'Bought + processed', qty: 3.1, cap: 6, unit: 't' },
-  { name: 'Coltan store', kind: 'Bought', qty: 0.42, cap: 1, unit: 't' },
-  { name: 'Wolframite store', kind: 'Bought', qty: 1.2, cap: 3, unit: 't' }
-];
-const moves = [
-  { date: '14 Nov', pile: 'Washed tin concentrate', dir: 'In', qty: 0.41, reason: 'Purchase P-1187', by: 'D. Banda' },
-  { date: '14 Nov', pile: 'Pit A raw sand', dir: 'In', qty: 22.0, reason: 'Excavation day shift', by: 'P. Nkosi' },
-  { date: '13 Nov', pile: 'Pit A raw sand', dir: 'Out', qty: 15.0, reason: 'To washing plant', by: 'P. Nkosi' },
-  { date: '10 Nov', pile: 'Washed tin concentrate', dir: 'Out', qty: 2.4, reason: 'Sale V-062', by: 'D. Banda' }
-];
-const expenseCats = ['Food', 'Fuel', 'Gas', 'Transport', 'Repairs', 'Other'];
-const expenses = [
-  { date: '14 Nov', cat: 'Fuel', desc: 'Diesel excavator, 120 L', by: 'P. Nkosi', amount: 186 },
-  { date: '14 Nov', cat: 'Food', desc: 'Lunch for 18 workers', by: 'S. Achieng', amount: 54 },
-  { date: '13 Nov', cat: 'Gas', desc: 'Cooking gas 2 × 13 kg', by: 'S. Achieng', amount: 38 },
-  { date: '13 Nov', cat: 'Repairs', desc: 'Water pump seal', by: 'P. Nkosi', amount: 72 },
-  { date: '12 Nov', cat: 'Transport', desc: 'Truck to town (supplies)', by: 'D. Banda', amount: 45 },
-  { date: '12 Nov', cat: 'Food', desc: 'Lunch for 17 workers', by: 'S. Achieng', amount: 51 },
-  { date: '11 Nov', cat: 'Fuel', desc: 'Generator petrol, 40 L', by: 'P. Nkosi', amount: 62 }
-];
-const staff = [
-  { name: 'Peter Nkosi', role: 'Site supervisor', start: 'Mar 2022', salary: 650, status: 'Working', leaveLeft: 12 },
-  { name: 'David Banda', role: 'Store keeper', start: 'Jun 2023', salary: 420, status: 'Working', leaveLeft: 9 },
-  { name: 'Sarah Achieng', role: 'Cook', start: 'Jan 2024', salary: 260, status: 'Working', leaveLeft: 14 },
-  { name: 'Moses Tembo', role: 'Excavator operator', start: 'Aug 2022', salary: 480, status: 'Day off', leaveLeft: 6 },
-  { name: 'Ruth Kamau', role: 'Cashier', start: 'Feb 2025', salary: 400, status: 'Working', leaveLeft: 15 },
-  { name: 'John Phiri', role: 'Washer', start: 'Sep 2024', salary: 220, status: 'Sick', leaveLeft: 11 },
-  { name: 'Ali Hassan', role: 'Security', start: 'May 2023', salary: 240, status: 'Working', leaveLeft: 8 }
-];
-const leaves = [
-  { name: 'Moses Tembo', type: 'Day off', from: '14 Nov', to: '15 Nov', days: 2, status: 'Approved' },
-  { name: 'John Phiri', type: 'Sick', from: '13 Nov', to: '15 Nov', days: 3, status: 'Approved' },
-  { name: 'Ali Hassan', type: 'Day off', from: '20 Nov', to: '20 Nov', days: 1, status: 'Waiting' },
-  { name: 'Sarah Achieng', type: 'Holiday', from: '22 Dec', to: '29 Dec', days: 6, status: 'Waiting' }
-];
-const cashbook = [
-  { date: '14 Nov', desc: 'Purchase P-1187 Kibo Miners Co-op', inn: 0, out: 5857 },
-  { date: '14 Nov', desc: 'Purchase P-1186 Joseph Mwamba (after advance)', inn: 0, out: 1021 },
-  { date: '14 Nov', desc: 'Fuel and food', inn: 0, out: 240 },
-  { date: '13 Nov', desc: 'Bank withdrawal', inn: 10000, out: 0 },
-  { date: '13 Nov', desc: 'Purchase P-1185 Grace Uwase', inn: 0, out: 1363 },
-  { date: '12 Nov', desc: 'Payment Eastern Metals V-061', inn: 13590, out: 0 }
-];
-
-// ---------- Helpers ----------
-const table = (cols, rows) => `<div class="table-wrap"><table><thead><tr>${cols.map(c => `<th class="${c.num ? 'num' : ''}">${c.h}</th>`).join('')}</tr></thead>
-  <tbody>${rows.map(r => `<tr>${cols.map(c => `<td class="${c.num ? 'num' : ''}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
-const chip = (text, kind) => `<span class="chip ${kind}">${text}</span>`;
-const statusChip = s => chip(s, { Paid: 'good', Approved: 'good', Working: 'good', Unpaid: 'warn', Waiting: 'warn', 'Awaiting payment': 'warn', 'Day off': 'neutral', Holiday: 'neutral', Sick: 'bad' }[s] || 'neutral');
-const head = (title, sub, actions = '') => `<div class="page-head"><div><h1>${title}</h1><p>${sub}</p></div><div class="actions">${actions}</div></div>`;
-const go = (id, text, cls = 'btn') => `<button class="${cls}" data-go="${id}">${text}</button>`;
-const save = text => `<button class="btn primary" data-save="${text}">${text}</button>`;
-const opts = arr => arr.map(x => `<option>${x}</option>`).join('');
-
-// ---------- Views ----------
-const V = {};
-
-V.dashboard = () => {
-  const days = ['Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
-  const buy = [4.2, 3.1, 0.8, 5.6, 6.4, 3.0, 7.3];
-  const sell = [0, 0, 0, 13.6, 0, 0, 0];
-  const max = 15, W = 560, H = 190, pad = 28, bw = 26;
-  const step = (W - pad * 2) / days.length;
-  const y = v => H - 24 - (v / max) * (H - 44);
-  let g = '';
-  [0, 5, 10, 15].forEach(v => { g += `<line x1="${pad}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${pad - 6}" y="${y(v) + 4}" font-size="10" text-anchor="end" fill="var(--muted)">${v}k</text>`; });
-  days.forEach((d, i) => {
-    const x = pad + i * step + step / 2;
-    g += `<rect x="${x - bw / 2 - 1}" y="${y(buy[i])}" width="${bw / 2}" height="${y(0) - y(buy[i])}" rx="2" fill="var(--chart-a)"/>`;
-    if (sell[i]) g += `<rect x="${x + 1}" y="${y(sell[i])}" width="${bw / 2}" height="${y(0) - y(sell[i])}" rx="2" fill="var(--chart-b)"/>`;
-    g += `<text x="${x}" y="${H - 6}" font-size="11" text-anchor="middle" fill="var(--muted)">${d}</text>`;
-  });
-  const totalStock = stockpiles.filter(s => s.kind === 'Own mining').reduce((a, s) => a + s.qty, 0);
-  return head('Good morning, Ama', 'Friday 14 November · overview of today and this month',
-      go('purchase-new', 'Buy minerals', 'btn primary') + go('expense-new', 'Add expense')) + `
-  <div class="grid g-kpi">
-    <div class="card kpi"><span class="label">Cash in safe</span><span class="value">${usd(8412)}</span><span class="note">After today's payments</span></div>
-    <div class="card kpi"><span class="label">Bought this month</span><span class="value">${usd(52480)}</span><span class="note"><span class="up">▲ 12%</span> vs October · 3.7 t</span></div>
-    <div class="card kpi"><span class="label">Sold this month</span><span class="value">${usd(45360)}</span><span class="note">1 sale awaiting payment</span></div>
-    <div class="card kpi"><span class="label">Open advances</span><span class="value">${usd(1950)}</span><span class="note">4 advances · 3 suppliers</span></div>
-    <div class="card kpi"><span class="label">Raw sand in stock</span><span class="value">${t(totalStock)}</span><span class="note">Pit A + Pit B</span></div>
-    <div class="card kpi"><span class="label">Expenses this month</span><span class="value">${usd(3264)}</span><span class="note"><span class="down">▲ 8%</span> fuel higher than usual</span></div>
-  </div>
-  <div class="grid g-2">
-    <div class="card chart"><h2>Bought and sold, last 7 days<a class="link" href="#purchases">Purchase list →</a></h2>
-      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Bar chart of purchases and sales per day in thousands of dollars">${g}</svg>
-      <div class="legend"><span><i style="background:var(--chart-a)"></i>Bought ($)</span><span><i style="background:var(--chart-b)"></i>Sold ($)</span></div>
-    </div>
-    <div class="card"><h2>Needs attention</h2><div class="alerts">
-      <div class="alert"><span class="dot" style="background:var(--bad)"></span><div>Advance A-208 is 43 days open<small>Kibo Miners Co-op · $800</small></div></div>
-      <div class="alert"><span class="dot" style="background:var(--warn)"></span><div>Lakeview Smelting owes $12,500<small>Sale V-062 · due 24 Nov</small></div></div>
-      <div class="alert"><span class="dot" style="background:var(--warn)"></span><div>2 day-off requests waiting<small>Ali Hassan, Sarah Achieng</small></div></div>
-      <div class="alert"><span class="dot" style="background:var(--good)"></span><div>Salaries due in 16 days<small>18 employees · ${usd(7240)}</small></div></div>
-    </div></div>
-  </div>
-  <div class="grid g-2">
-    <div class="card"><h2>Latest purchases<a class="link" href="#purchases">See all →</a></h2>${table([
-      { h: 'Date', f: r => r.date }, { h: 'Supplier', f: r => r.sup }, { h: 'Mineral', f: r => r.min },
-      { h: 'Net', num: 1, f: r => kg(r.net) }, { h: 'Amount', num: 1, f: r => usd(r.total) }, { h: 'Status', f: r => statusChip(r.status) }
-    ], purchases.slice(0, 4))}</div>
-    <div class="card"><h2>Stockpiles<a class="link" href="#stock">Details →</a></h2><div class="bars">${stockpiles.map(s => `
-      <div class="bar-row"><span>${s.name}</span><span class="v">${t(s.qty)}</span><div class="track"><div class="fill ${s.kind === 'Own mining' ? '' : 'gold'}" style="width:${Math.min(100, s.qty / s.cap * 100)}%"></div></div></div>`).join('')}
-    </div></div>
-  </div>
-  <div class="card"><h2>Today on site</h2><div class="grid g-kpi">
-    <div class="kpi"><span class="label">Working</span><span class="value">16</span></div>
-    <div class="kpi"><span class="label">Day off</span><span class="value">1</span><span class="note">Moses Tembo</span></div>
-    <div class="kpi"><span class="label">Sick</span><span class="value">1</span><span class="note">John Phiri</span></div>
-    <div class="kpi"><span class="label">Spent today</span><span class="value">${usd(240)}</span><span class="note">Fuel $186 · food $54</span></div>
-  </div></div>`;
+// ================= Example data (Zambian kwacha, grams) =================
+const EXAMPLE = {
+  settings: { buyPrice: 2900, sellPrice: 3250, transport: 150, mercuryPrice: 3.2, opening: 5 },
+  machines: [
+    { no: 'M1', name: 'Ball mill 1', cost: 200 },
+    { no: 'M2', name: 'Ball mill 2', cost: 250 },
+    { no: 'M3', name: 'Sluice + concentrator', cost: 180 }
+  ],
+  advances: [
+    { date: '2026-10-03', customer: 'Chanda Mining Group', amount: 5000, note: 'Cash' },
+    { date: '2026-10-12', customer: 'Mwila & Sons', amount: 3000, note: 'Fuel money' },
+    { date: '2026-10-25', customer: 'Kabwe Gold Co-op', amount: 8000, note: 'Cash' },
+    { date: '2026-11-04', customer: 'Chanda Mining Group', amount: 4000, note: 'Cash' },
+    { date: '2026-11-10', customer: 'Bwalya Brothers', amount: 2500, note: 'Tools' }
+  ],
+  intake: [
+    { date: '2026-10-08', customer: 'Chanda Mining Group', grams: 12.4, price: 2850, machine: 'M1', transport: 150 },
+    { date: '2026-10-18', customer: 'Mwila & Sons', grams: 6.2, price: 2850, machine: 'M2', transport: 150 },
+    { date: '2026-10-30', customer: 'Kabwe Gold Co-op', grams: 2.1, price: 2850, machine: 'M3', transport: 150 },
+    { date: '2026-11-06', customer: 'Chanda Mining Group', grams: 9.8, price: 2900, machine: 'M1', transport: 150 },
+    { date: '2026-11-12', customer: 'Kabwe Gold Co-op', grams: 7.5, price: 2900, machine: 'M2', transport: 150 },
+    { date: '2026-11-14', customer: 'Bwalya Brothers', grams: 4.3, price: 2900, machine: 'M3', transport: 150 }
+  ],
+  sales: [
+    { date: '2026-10-21', buyer: 'Lusaka Bullion Traders', grams: 15, price: 3150, status: 'Paid' },
+    { date: '2026-11-03', buyer: 'Copperbelt Refiners', grams: 8, price: 3200, status: 'Paid' },
+    { date: '2026-11-13', buyer: 'Lusaka Bullion Traders', grams: 10, price: 3250, status: 'Not paid yet' }
+  ],
+  expenses: [
+    { date: '2026-10-06', category: 'Fuel', desc: 'Diesel generator 60 L', by: 'Peter Mulenga', amount: 1650 },
+    { date: '2026-10-14', category: 'Food', desc: 'Mealie meal and relish, week', by: 'Grace Banda', amount: 980 },
+    { date: '2026-10-22', category: 'Machine repair', desc: 'Ball mill 2 bearing', by: 'Peter Mulenga', amount: 1200 },
+    { date: '2026-10-29', category: 'Gas', desc: 'Gas cylinder refill', by: 'Grace Banda', amount: 420 },
+    { date: '2026-11-02', category: 'Fuel', desc: 'Diesel generator 70 L', by: 'Peter Mulenga', amount: 1925 },
+    { date: '2026-11-05', category: 'Food', desc: 'Lunch for 18 workers', by: 'Grace Banda', amount: 540 },
+    { date: '2026-11-09', category: 'Transport', desc: 'Truck to Kabwe (spares)', by: 'Joseph Phiri', amount: 800 },
+    { date: '2026-11-11', category: 'Gas', desc: 'Gas cylinder refill', by: 'Grace Banda', amount: 420 },
+    { date: '2026-11-13', category: 'Food', desc: 'Lunch for 17 workers', by: 'Grace Banda', amount: 510 },
+    { date: '2026-11-14', category: 'Fuel', desc: 'Petrol water pump 20 L', by: 'Peter Mulenga', amount: 560 }
+  ],
+  mercury: [
+    { date: '2026-10-09', machine: 'M1', grams: 110, use: 'Amalgamation' },
+    { date: '2026-10-19', machine: 'M2', grams: 70, use: 'Amalgamation' },
+    { date: '2026-10-31', machine: 'M3', grams: 35, use: 'Re-processing tailings' },
+    { date: '2026-11-03', machine: 'M1', grams: 120, use: 'Amalgamation' },
+    { date: '2026-11-07', machine: 'M1', grams: 95, use: 'Amalgamation' },
+    { date: '2026-11-10', machine: 'M2', grams: 80, use: 'Amalgamation' },
+    { date: '2026-11-12', machine: 'M3', grams: 40, use: 'Re-processing tailings' },
+    { date: '2026-11-14', machine: 'M2', grams: 65, use: 'Amalgamation' }
+  ],
+  salaries: [
+    { name: 'Peter Mulenga', job: 'Site supervisor', salary: 6500, daysOff: 1, status: 'Not paid yet' },
+    { name: 'Esther Zulu', job: 'Cashier', salary: 4500, daysOff: 0, status: 'Not paid yet' },
+    { name: 'Joseph Phiri', job: 'Machine operator', salary: 3800, daysOff: 2, status: 'Not paid yet' },
+    { name: 'Daniel Tembo', job: 'Machine operator', salary: 3800, daysOff: 0, status: 'Not paid yet' },
+    { name: 'Moses Lungu', job: 'Washer', salary: 2800, daysOff: 1, status: 'Not paid yet' },
+    { name: 'Ruth Mwale', job: 'Washer', salary: 2800, daysOff: 0, status: 'Not paid yet' },
+    { name: 'Grace Banda', job: 'Cook', salary: 2500, daysOff: 0, status: 'Not paid yet' },
+    { name: 'Kelvin Sakala', job: 'Security', salary: 2600, daysOff: 3, status: 'Not paid yet' }
+  ]
 };
 
-V['purchase-new'] = () => head('Buy minerals', 'A supplier brings minerals. Weigh, fill in, and the payout is calculated.') + `
-  <div class="grid g-2">
-    <div class="card"><h2>Purchase details</h2><form class="form" id="buyForm">
-      <div class="field"><label for="b-sup">Supplier</label><select id="b-sup">${suppliers.map(s => `<option value="${s.id}">${s.name} (${s.id})</option>`).join('')}</select></div>
-      <div class="field"><label for="b-min">Mineral</label><select id="b-min">${minerals.map((m, i) => `<option value="${i}">${m.name}</option>`).join('')}</select></div>
-      <div class="field"><label for="b-gross">Gross weight (kg)</label><input id="b-gross" type="number" step="0.1" value="120"></div>
-      <div class="field"><label for="b-ded">Deduction for water and dirt (%)</label><input id="b-ded" type="number" step="0.5" value="4"></div>
-      <div class="field"><label for="b-grade">Grade tested (%)</label><input id="b-grade" type="number" step="0.1" value="64"></div>
-      <div class="field"><label for="b-price">Price per kg ($)</label><input id="b-price" type="number" step="0.01" value="14.20"></div>
-      <div class="field full"><label for="b-store">Put into stockpile</label><select id="b-store">${stockpiles.filter(s => s.kind !== 'Own mining').map(s => `<option>${s.name}</option>`).join('')}</select></div>
-      <label class="check field full" for="b-adv"><input id="b-adv" type="checkbox" checked> Deduct this supplier's open advances from the payout</label>
-    </form></div>
-    <div class="card"><h2>Calculation</h2><div class="calc" id="buyCalc"></div>
-      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">${save('Save and print receipt')}<button class="btn" data-save="Draft saved">Save as draft</button></div>
-    </div>
-  </div>`;
-function buyCalc() {
-  const s = suppliers.find(x => x.id === document.getElementById('b-sup').value);
-  const gross = +document.getElementById('b-gross').value || 0;
-  const ded = +document.getElementById('b-ded').value || 0;
-  const price = +document.getElementById('b-price').value || 0;
-  const net = gross * (1 - ded / 100);
-  const total = net * price;
-  const useAdv = document.getElementById('b-adv').checked;
-  const advDeduct = useAdv ? Math.min(s.open, total) : 0;
-  const row = (a, b) => `<div class="calc-row"><span>${a}</span><span>${b}</span></div>`;
-  document.getElementById('buyCalc').innerHTML =
-    row('Gross weight', kg(gross)) + row(`Deduction (${ded}%)`, '− ' + kg(gross - net)) + row('Net weight', kg(net)) +
-    row('Price per kg', usd2(price)) + row('Purchase amount', usd2(total)) +
-    row(`Open advances (${s.name})`, usd2(s.open)) + row('Deducted now', '− ' + usd2(advDeduct)) +
-    (useAdv && s.open > total ? row('Advance still open after this', usd2(s.open - total)) : '') +
-    `<div class="calc-row total"><span>Pay to supplier</span><span>${usd2(total - advDeduct)}</span></div>`;
+const STORE_KEY = 'mineledger-v2';
+let S;
+function load() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) { saved = null; }
+  S = JSON.parse(JSON.stringify(EXAMPLE));
+  if (saved && typeof saved === 'object') Object.keys(S).forEach(k => { if (saved[k] !== undefined) S[k] = saved[k]; });
+}
+function persist() { try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) { /* storage blocked: keep working in memory */ } }
+load();
+
+// ================= Helpers =================
+const num = v => { const n = parseFloat(String(v ?? '').replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : 0; };
+const K = n => 'K ' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const K0 = n => 'K ' + Math.round(n).toLocaleString('en-US');
+const G = n => Number(n).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + ' g';
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+const norm = s => String(s || '').trim().toLowerCase();
+const dshort = s => s ? new Date(s + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }) : '';
+const monthName = ym => new Date(ym + '-01T00:00:00Z').toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const monday = s => { const d = new Date(s + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
+const todayStr = () => new Date().toISOString().slice(0, 10);
+const sum = (arr, f) => arr.reduce((a, x) => a + f(x), 0);
+const head = (title, sub, actions = '') => `<div class="page-head"><div><h1>${title}</h1><p>${sub}</p></div><div class="actions">${actions}</div></div>`;
+const chip = (t, k) => `<span class="chip ${k}">${esc(t)}</span>`;
+const dataTable = (cols, rows, foot) => `<div class="table-wrap"><table class="data"><thead><tr>${cols.map(c => `<th class="${c.num ? 'num' : ''}">${c.h}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map(r => `<tr>${cols.map(c => `<td class="${c.num ? 'num' : ''}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</tbody>
+  ${foot ? `<tfoot><tr>${foot.map((f, i) => `<td class="${cols[i].num ? 'num' : ''}">${f}</td>`).join('')}</tr></tfoot>` : ''}</table></div>`;
+const machineCost = no => num((S.machines.find(m => norm(m.no) === norm(no)) || {}).cost);
+
+// ================= Calculations =================
+// Gold brought in: value = grams x price; minus advance still open for that customer (from earlier advances), transport and machine cost.
+function deriveIntake() {
+  const events = [];
+  S.advances.forEach(a => events.push({ date: a.date || '', kind: 0, a }));
+  S.intake.forEach((r, i) => events.push({ date: r.date || '', kind: 1, r, i }));
+  events.sort((x, y) => x.date.localeCompare(y.date) || x.kind - y.kind);
+  const bal = {}, out = [];
+  events.forEach(e => {
+    if (e.kind === 0) { const c = norm(e.a.customer); bal[c] = (bal[c] || 0) + num(e.a.amount); return; }
+    const c = norm(e.r.customer);
+    const value = num(e.r.grams) * num(e.r.price);
+    const adv = bal[c] || 0;
+    const tr = num(e.r.transport), mc = machineCost(e.r.machine);
+    const pay = value - adv - tr - mc;
+    bal[c] = pay < 0 ? -pay : 0;
+    out[e.i] = { value, adv, mc, pay };
+  });
+  return { rows: out, bal };
+}
+const deriveRows = {
+  intake: () => deriveIntake().rows,
+  sales: () => S.sales.map(r => ({ total: num(r.grams) * num(r.price) })),
+  mercury: () => S.mercury.map(r => ({ cost: num(r.grams) * num(S.settings.mercuryPrice), name: (S.machines.find(m => norm(m.no) === norm(r.machine)) || {}).name || '' })),
+  machines: () => S.machines.map(m => ({ uses: S.intake.filter(r => norm(r.machine) === norm(m.no)).length + S.mercury.filter(r => norm(r.machine) === norm(m.no)).length }))
+};
+
+function stockMoves() {
+  const mv = [];
+  S.intake.forEach(r => { if (num(r.grams)) mv.push({ date: r.date, who: r.customer, inn: num(r.grams), out: 0, what: 'Brought in by customer' }); });
+  S.sales.forEach(r => { if (num(r.grams)) mv.push({ date: r.date, who: r.buyer, inn: 0, out: num(r.grams), what: 'Sold' }); });
+  mv.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  let bal = num(S.settings.opening);
+  mv.forEach(m => { bal += m.inn - m.out; m.bal = bal; });
+  return { moves: mv, now: bal };
 }
 
-V.purchases = () => head('Purchase list', 'Every purchase from suppliers, newest first.', go('purchase-new', 'Buy minerals', 'btn primary')) +
-  `<div class="card">${table([
-    { h: 'No.', f: r => r.no }, { h: 'Date', f: r => r.date }, { h: 'Supplier', f: r => r.sup }, { h: 'Mineral', f: r => r.min },
-    { h: 'Net', num: 1, f: r => kg(r.net) }, { h: 'Amount', num: 1, f: r => usd(r.total) }, { h: 'Advance deducted', num: 1, f: r => r.adv ? usd(r.adv) : '–' },
-    { h: 'Paid out', num: 1, f: r => usd(r.total - r.adv) }, { h: 'Status', f: r => statusChip(r.status) }
-  ], purchases)}</div>`;
+// Money in / out for a period filter (date string -> boolean)
+function money(inPeriod, withSalaries) {
+  const intake = deriveIntake().rows;
+  const sales = sum(S.sales.filter(r => inPeriod(r.date)), r => num(r.grams) * num(r.price));
+  const gold = sum(S.intake.map((r, i) => ({ r, d: intake[i] })).filter(x => inPeriod(x.r.date)), x => Math.max(0, x.d ? x.d.pay : 0));
+  const advances = sum(S.advances.filter(r => inPeriod(r.date)), r => num(r.amount));
+  const expenses = sum(S.expenses.filter(r => inPeriod(r.date)), r => num(r.amount));
+  const mercury = sum(S.mercury.filter(r => inPeriod(r.date)), r => num(r.grams) * num(S.settings.mercuryPrice));
+  const salaries = withSalaries ? sum(S.salaries, r => num(r.salary)) : 0;
+  const out = gold + advances + expenses + mercury + salaries;
+  return { sales, gold, advances, expenses, mercury, salaries, out, net: sales - out };
+}
+const allMonths = () => [...new Set([...S.sales, ...S.intake, ...S.advances, ...S.expenses, ...S.mercury].map(r => String(r.date || '').slice(0, 7)).filter(Boolean))].sort();
 
-V.suppliers = () => head('Suppliers', 'People and groups who bring minerals to sell.', save('Add supplier')) +
-  `<div class="card">${table([
-    { h: 'ID', f: r => r.id }, { h: 'Name', f: r => `<b>${r.name}</b>` }, { h: 'Phone', f: r => r.phone }, { h: 'Mine site', f: r => r.site },
-    { h: 'Bought this year', num: 1, f: r => usd(r.bought) }, { h: 'Open advance', num: 1, f: r => r.open ? `<span class="down">${usd(r.open)}</span>` : '–' }
-  ], suppliers)}</div>`;
-
-V['advance-new'] = () => head('Give advance', 'Money or goods given before the supplier delivers. Deducted automatically at their next purchase.') + `
-  <div class="card" style="max-width:640px"><form class="form">
-    <div class="field"><label for="a-sup">Supplier</label><select id="a-sup">${opts(suppliers.map(s => s.name))}</select></div>
-    <div class="field"><label for="a-type">Type</label><select id="a-type">${opts(['Cash', 'Fuel', 'Tools', 'Food', 'Other'])}</select></div>
-    <div class="field"><label for="a-amt">Amount ($)</label><input id="a-amt" type="number" value="200"></div>
-    <div class="field"><label for="a-date">Date</label><input id="a-date" type="date" value="2026-11-14"></div>
-    <div class="field full"><label for="a-note">Note</label><input id="a-note" placeholder="For example: 40 L diesel for pump"></div>
-  </form><div style="margin-top:14px">${save('Save advance')}</div></div>`;
-
-V.advances = () => head('Open advances', 'Not yet repaid. Oldest first.', go('advance-new', 'Give advance', 'btn primary')) + `
-  <div class="grid g-kpi"><div class="card kpi"><span class="label">Total open</span><span class="value">${usd(1950)}</span></div>
-  <div class="card kpi"><span class="label">Older than 30 days</span><span class="value down">${usd(800)}</span></div></div>
-  <div class="card">${table([
-    { h: 'No.', f: r => r.no }, { h: 'Date', f: r => r.date }, { h: 'Supplier', f: r => r.sup }, { h: 'Type', f: r => r.type },
-    { h: 'Amount', num: 1, f: r => usd(r.amount) }, { h: 'Days open', num: 1, f: r => r.age > 30 ? chip(r.age + ' days', 'bad') : r.age + ' days' }
-  ], advances)}</div>`;
-
-V['sale-new'] = () => head('New sale', 'Sell minerals to a buyer. Stock goes down automatically.') + `
-  <div class="card" style="max-width:720px"><form class="form" id="saleForm">
-    <div class="field"><label for="s-buyer">Buyer</label><select id="s-buyer">${opts(buyers.map(b => b.name))}</select></div>
-    <div class="field"><label for="s-pile">From stockpile</label><select id="s-pile">${opts(stockpiles.filter(s => s.kind !== 'Own mining').map(s => s.name))}</select></div>
-    <div class="field"><label for="s-qty">Quantity (kg)</label><input id="s-qty" type="number" value="1000"></div>
-    <div class="field"><label for="s-price">Price per kg ($)</label><input id="s-price" type="number" step="0.01" value="18.90"></div>
-    <div class="field full"><label for="s-total">Total</label><input id="s-total" readonly></div>
-  </form><div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">${save('Save sale')}<button class="btn" data-save="Invoice created">Make invoice</button></div></div>`;
-
-V.sales = () => head('Sales list', 'Minerals sold to buyers.', go('sale-new', 'New sale', 'btn primary')) +
-  `<div class="card">${table([
-    { h: 'No.', f: r => r.no }, { h: 'Date', f: r => r.date }, { h: 'Buyer', f: r => r.buyer }, { h: 'Mineral', f: r => r.min },
-    { h: 'Quantity', num: 1, f: r => kg(r.qty) }, { h: 'Price/kg', num: 1, f: r => usd2(r.price) }, { h: 'Total', num: 1, f: r => usd(r.qty * r.price) }, { h: 'Status', f: r => statusChip(r.status) }
-  ], sales)}</div>`;
-
-V.buyers = () => head('Buyers', 'Companies that buy minerals from us.', save('Add buyer')) +
-  `<div class="card">${table([
-    { h: 'Name', f: r => `<b>${r.name}</b>` }, { h: 'Contact', f: r => r.contact }, { h: 'Type', f: r => r.country },
-    { h: 'Sold this year', num: 1, f: r => usd(r.sold) }, { h: 'Still owes us', num: 1, f: r => r.open ? `<span class="down">${usd(r.open)}</span>` : '–' }
-  ], buyers)}</div>`;
-
-V.stock = () => head('Stock overview', 'How much is in each stockpile right now.', go('stock-move', 'Add or remove stock', 'btn primary')) + `
-  <div class="grid g-2e">${stockpiles.map(s => `<div class="card"><h2>${s.name} ${chip(s.kind, 'neutral')}</h2>
-    <div class="kpi"><span class="value">${t(s.qty)}</span><span class="note">of ${t(s.cap)} space · ${Math.round(s.qty / s.cap * 100)}% full</span></div>
-    <div class="bar-row" style="margin-top:10px"><div class="track"><div class="fill ${s.kind === 'Own mining' ? '' : 'gold'}" style="width:${Math.min(100, s.qty / s.cap * 100)}%"></div></div></div></div>`).join('')}</div>
-  <div class="card"><h2>Recent movements</h2>${table([
-    { h: 'Date', f: r => r.date }, { h: 'Stockpile', f: r => r.pile }, { h: 'In / out', f: r => chip(r.dir, r.dir === 'In' ? 'good' : 'warn') },
-    { h: 'Quantity', num: 1, f: r => t(r.qty) }, { h: 'Reason', f: r => r.reason }, { h: 'By', f: r => r.by }
-  ], moves)}</div>`;
-
-V['stock-move'] = () => head('Add or remove stock', 'For example: sand dug today, sand sent to the washing plant, or a correction after weighing.') + `
-  <div class="card" style="max-width:640px"><form class="form">
-    <div class="field"><label for="m-pile">Stockpile</label><select id="m-pile">${opts(stockpiles.map(s => s.name))}</select></div>
-    <div class="field"><label for="m-dir">In or out</label><select id="m-dir">${opts(['In (add)', 'Out (remove)'])}</select></div>
-    <div class="field"><label for="m-qty">Quantity (tonnes)</label><input id="m-qty" type="number" step="0.1" value="20"></div>
-    <div class="field"><label for="m-date">Date</label><input id="m-date" type="date" value="2026-11-14"></div>
-    <div class="field full"><label for="m-why">Reason</label><select id="m-why">${opts(['Excavation', 'To washing plant', 'Correction after weighing', 'Other'])}</select></div>
-  </form><div style="margin-top:14px">${save('Save movement')}</div></div>`;
-
-V['expense-new'] = () => head('Add expense', 'Daily costs such as food, fuel and gas.') + `
-  <div class="card" style="max-width:640px"><form class="form">
-    <div class="field"><label for="e-cat">Category</label><select id="e-cat">${opts(expenseCats)}</select></div>
-    <div class="field"><label for="e-amt">Amount ($)</label><input id="e-amt" type="number" value="50"></div>
-    <div class="field"><label for="e-date">Date</label><input id="e-date" type="date" value="2026-11-14"></div>
-    <div class="field"><label for="e-by">Paid by</label><select id="e-by">${opts(staff.map(s => s.name))}</select></div>
-    <div class="field full"><label for="e-desc">What was it for?</label><input id="e-desc" placeholder="For example: diesel for excavator, 80 L"></div>
-    <div class="field full"><label for="e-photo">Photo of receipt (optional)</label><input id="e-photo" type="file" accept="image/*"></div>
-  </form><div style="margin-top:14px">${save('Save expense')}</div></div>`;
-
-let expFilter = 'All';
-V.expenses = () => {
-  const list = expenses.filter(e => expFilter === 'All' || e.cat === expFilter);
-  const byCat = expenseCats.map(c => ({ c, v: expenses.filter(e => e.cat === c).reduce((a, e) => a + e.amount, 0) })).filter(x => x.v);
-  const maxV = Math.max(...byCat.map(x => x.v));
-  return head('Daily expenses', 'This week · filter by category.', go('expense-new', 'Add expense', 'btn primary')) + `
-  <div class="filters" id="expFilters">${['All', ...expenseCats].map(c => `<button class="${c === expFilter ? 'on' : ''}" data-cat="${c}">${c}</button>`).join('')}</div>
-  <div class="grid g-2">
-    <div class="card">${table([
-      { h: 'Date', f: r => r.date }, { h: 'Category', f: r => chip(r.cat, 'neutral') }, { h: 'Description', f: r => r.desc }, { h: 'Paid by', f: r => r.by }, { h: 'Amount', num: 1, f: r => usd(r.amount) }
-    ], list)}<div class="calc-row total" style="margin-top:6px"><span>Total</span><span>${usd(list.reduce((a, e) => a + e.amount, 0))}</span></div></div>
-    <div class="card"><h2>Per category this week</h2><div class="bars">${byCat.map(x => `
-      <div class="bar-row"><span>${x.c}</span><span class="v">${usd(x.v)}</span><div class="track"><div class="fill gold" style="width:${x.v / maxV * 100}%"></div></div></div>`).join('')}</div></div>
-  </div>`;
+// ================= Spreadsheet engine =================
+const machineNos = () => S.machines.map(m => m.no).filter(Boolean);
+const SHEETS = {
+  sales: {
+    cols: [
+      { k: 'date', h: 'Date', t: 'date', w: 150 },
+      { k: 'buyer', h: 'Sold to (company)', t: 'text', list: 'l-buyers', w: 230 },
+      { k: 'grams', h: 'Gold (g)', t: 'num', w: 100, total: 'g' },
+      { k: 'price', h: 'Price per g (K)', t: 'num', w: 130 },
+      { k: 'total', h: 'Total (K)', t: 'calc', f: 'K', strong: 1, total: 'K', w: 150 },
+      { k: 'status', h: 'Paid?', t: 'select', opts: ['Paid', 'Not paid yet'], w: 140 }
+    ],
+    blank: () => ({ date: todayStr(), buyer: '', grams: '', price: S.settings.sellPrice, status: 'Not paid yet' })
+  },
+  expenses: {
+    cols: [
+      { k: 'date', h: 'Date', t: 'date', w: 150 },
+      { k: 'category', h: 'Category', t: 'select', opts: ['Food', 'Fuel', 'Gas', 'Transport', 'Machine repair', 'Other'], w: 150 },
+      { k: 'desc', h: 'What was it for', t: 'text', w: 260 },
+      { k: 'by', h: 'Paid by', t: 'text', list: 'l-staff', w: 160 },
+      { k: 'amount', h: 'Amount (K)', t: 'num', w: 130, total: 'K' }
+    ],
+    blank: () => ({ date: todayStr(), category: 'Food', desc: '', by: '', amount: '' })
+  },
+  mercury: {
+    cols: [
+      { k: 'date', h: 'Date', t: 'date', w: 150 },
+      { k: 'machine', h: 'Machine no.', t: 'select', opts: machineNos, w: 120 },
+      { k: 'name', h: 'Machine', t: 'calc', f: 'text', w: 190 },
+      { k: 'grams', h: 'Mercury used (g)', t: 'num', w: 140, total: 'g' },
+      { k: 'use', h: 'Used for', t: 'select', opts: ['Amalgamation', 'Re-processing tailings', 'Cleaning', 'Other'], w: 190 },
+      { k: 'cost', h: 'Cost (K)', t: 'calc', f: 'K', strong: 1, total: 'K', w: 130 }
+    ],
+    blank: () => ({ date: todayStr(), machine: machineNos()[0] || '', grams: '', use: 'Amalgamation' }),
+    after: () => renderMercurySummary()
+  },
+  salaries: {
+    cols: [
+      { k: 'name', h: 'Name', t: 'text', w: 190 },
+      { k: 'job', h: 'Job', t: 'text', w: 170 },
+      { k: 'salary', h: 'Monthly salary (K)', t: 'num', w: 150, total: 'K' },
+      { k: 'daysOff', h: 'Days off this month', t: 'num', w: 150, total: 'n' },
+      { k: 'status', h: 'Paid?', t: 'select', opts: ['Paid', 'Not paid yet'], w: 140 }
+    ],
+    blank: () => ({ name: '', job: '', salary: '', daysOff: 0, status: 'Not paid yet' })
+  },
+  advances: {
+    cols: [
+      { k: 'date', h: 'Date', t: 'date', w: 150 },
+      { k: 'customer', h: 'Customer (company)', t: 'text', list: 'l-customers', w: 230 },
+      { k: 'amount', h: 'Advance (K)', t: 'num', w: 130, total: 'K' },
+      { k: 'note', h: 'Note', t: 'text', w: 220 }
+    ],
+    blank: () => ({ date: todayStr(), customer: '', amount: '', note: 'Cash' })
+  },
+  intake: {
+    cols: [
+      { k: 'date', h: 'Date', t: 'date', w: 150 },
+      { k: 'customer', h: 'Customer (company)', t: 'text', list: 'l-customers', w: 210 },
+      { k: 'grams', h: 'Gold (g)', t: 'num', w: 95, total: 'g' },
+      { k: 'price', h: 'Price per g (K)', t: 'num', w: 120 },
+      { k: 'value', h: 'Gold value', t: 'calc', f: 'K', total: 'K', w: 135 },
+      { k: 'adv', h: '− Advance before', t: 'calc', f: 'K', w: 140 },
+      { k: 'transport', h: '− Transport', t: 'num', w: 110, total: 'K' },
+      { k: 'machine', h: 'Machine no.', t: 'select', opts: machineNos, w: 105 },
+      { k: 'mc', h: '− Machine cost', t: 'calc', f: 'K', total: 'K', w: 130 },
+      { k: 'pay', h: 'Pay to customer', t: 'calc', f: 'pay', total: 'pay', w: 170 }
+    ],
+    blank: () => ({ date: todayStr(), customer: '', grams: '', price: S.settings.buyPrice, machine: machineNos()[0] || '', transport: S.settings.transport })
+  },
+  machines: {
+    cols: [
+      { k: 'no', h: 'Machine no.', t: 'text', w: 120 },
+      { k: 'name', h: 'Name', t: 'text', w: 220 },
+      { k: 'cost', h: 'Fixed cost per use (K)', t: 'num', w: 180 },
+      { k: 'uses', h: 'Times used', t: 'calc', f: 'n', w: 110 }
+    ],
+    blank: () => ({ no: 'M' + (S.machines.length + 1), name: '', cost: '' })
+  }
 };
+const LETTERS = 'ABCDEFGHIJKLMNOP';
 
-V.staff = () => head('Staff list', '18 employees · 7 shown in this example.', save('Add employee')) +
-  `<div class="card">${table([
-    { h: 'Name', f: r => `<b>${r.name}</b>` }, { h: 'Job', f: r => r.role }, { h: 'Started', f: r => r.start },
-    { h: 'Monthly salary', num: 1, f: r => usd(r.salary) }, { h: 'Days off left', num: 1, f: r => r.leaveLeft }, { h: 'Today', f: r => statusChip(r.status) }
-  ], staff)}</div>`;
+function fmtCell(f, v) {
+  if (v === undefined || v === null) return '';
+  if (f === 'K') return K(v);
+  if (f === 'g') return G(v);
+  if (f === 'n') return String(Math.round(v * 100) / 100);
+  if (f === 'pay') return v < 0 ? 'Still owes ' + K(-v) : K(v);
+  return esc(v);
+}
 
-V.payroll = () => {
-  const rows = staff.map((s, i) => ({ ...s, adv: [0, 50, 0, 80, 0, 30, 0][i], bonus: [40, 0, 0, 0, 0, 0, 20][i] }));
-  return head('Salaries', 'November 2026 · pay date 30 November.', save('Mark all as paid')) + `
-  <div class="grid g-kpi">
-    <div class="card kpi"><span class="label">Total to pay</span><span class="value">${usd(7240)}</span><span class="note">18 employees</span></div>
-    <div class="card kpi"><span class="label">Salary advances</span><span class="value">${usd(160)}</span><span class="note">Deducted this month</span></div>
-    <div class="card kpi"><span class="label">Paid so far</span><span class="value">${usd(0)}</span></div>
+function sheetHtml(key) {
+  const sh = SHEETS[key], rows = S[key];
+  const cols = sh.cols;
+  const cell = (c, row, r) => {
+    if (c.t === 'calc') return `<td class="calc ${c.strong ? 'strong' : ''}" data-calc="${c.k}" data-r="${r}"></td>`;
+    if (c.t === 'select') {
+      const opts = typeof c.opts === 'function' ? c.opts() : c.opts;
+      const all = opts.includes(row[c.k]) || !row[c.k] ? opts : [row[c.k], ...opts];
+      return `<td><select data-r="${r}" data-k="${c.k}" aria-label="${esc(c.h)} row ${r + 1}">${row[c.k] ? '' : '<option></option>'}${all.map(o => `<option${o === row[c.k] ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select></td>`;
+    }
+    const type = c.t === 'date' ? 'date' : 'text';
+    return `<td><input type="${type}" class="${c.t === 'num' ? 'n' : ''}" ${c.t === 'num' ? 'inputmode="decimal"' : ''} ${c.list ? `list="${c.list}"` : ''}
+      data-r="${r}" data-k="${c.k}" value="${esc(row[c.k])}" aria-label="${esc(c.h)} row ${r + 1}" autocomplete="off"></td>`;
+  };
+  const hasTotals = cols.some(c => c.total);
+  return `<div class="sheet-wrap"><table class="sheet" data-sheet="${key}">
+    <thead><tr class="letters"><th class="rn"></th>${cols.map((c, i) => `<th style="min-width:${c.w}px">${LETTERS[i]}</th>`).join('')}</tr>
+    <tr class="names"><th class="rn"></th>${cols.map(c => `<th class="${c.t === 'num' || (c.t === 'calc' && c.f !== 'text') ? 'r' : ''}">${c.h}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map((row, r) => `<tr><td class="rn">${r + 1}<button type="button" data-del="${r}" aria-label="Delete row ${r + 1}" title="Delete row">×</button></td>${cols.map(c => cell(c, row, r)).join('')}</tr>`).join('')}</tbody>
+    ${hasTotals ? `<tfoot><tr><td class="rn">Σ</td>${cols.map((c, i) => `<td class="${c.total ? 'num' : ''}" data-total="${c.total ? c.k : ''}">${i === 0 && !c.total ? 'Total' : ''}</td>`).join('')}</tr></tfoot>` : ''}
+  </table></div>`;
+}
+
+function refreshSheet(key) {
+  const table = document.querySelector(`table.sheet[data-sheet="${key}"]`);
+  if (!table) return;
+  const sh = SHEETS[key];
+  const D = deriveRows[key] ? deriveRows[key]() : [];
+  table.querySelectorAll('[data-calc]').forEach(td => {
+    const c = sh.cols.find(x => x.k === td.dataset.calc);
+    const v = (D[+td.dataset.r] || {})[c.k];
+    td.textContent = fmtCell(c.f, v).replace(/&amp;/g, '&');
+    td.classList.toggle('owe', c.f === 'pay' && v < 0);
+  });
+  table.querySelectorAll('[data-total]').forEach(td => {
+    const k = td.dataset.total; if (!k) return;
+    const c = sh.cols.find(x => x.k === k);
+    const vals = S[key].map((row, r) => c.t === 'calc' ? ((D[r] || {})[k] || 0) : num(row[k]));
+    if (c.total === 'pay') td.textContent = 'Paid ' + K(sum(vals, v => Math.max(0, v)));
+    else td.textContent = fmtCell(c.total, sum(vals, v => v));
+  });
+  if (sh.after) sh.after();
+}
+
+function mountSheet(key, focus) {
+  const host = document.getElementById('sheet-' + key);
+  if (!host) return;
+  host.innerHTML = sheetHtml(key);
+  refreshSheet(key);
+  renderLists();
+  if (focus) { const el = host.querySelector(`[data-r="${focus.r}"][data-k="${focus.k}"]`); if (el) el.focus(); }
+}
+
+function addRow(key, focusKey) {
+  S[key].push(SHEETS[key].blank());
+  persist();
+  mountSheet(key, { r: S[key].length - 1, k: focusKey || SHEETS[key].cols.find(c => c.t !== 'calc').k });
+}
+
+const sheetBlock = (key, addLabel) => `
+  <div class="sheet-tools"><button class="btn primary" data-add="${key}">+ ${addLabel}</button>
+  <span class="hint">Type like in Excel. Enter goes to the next row. Grey columns are calculated.</span></div>
+  <div id="sheet-${key}"></div>`;
+
+function renderLists() {
+  const uniq = arr => [...new Set(arr.map(x => String(x || '').trim()).filter(Boolean))];
+  const dl = (id, arr) => `<datalist id="${id}">${uniq(arr).map(v => `<option value="${esc(v)}"></option>`).join('')}</datalist>`;
+  document.getElementById('lists').innerHTML =
+    dl('l-customers', [...S.advances.map(r => r.customer), ...S.intake.map(r => r.customer)]) +
+    dl('l-buyers', S.sales.map(r => r.buyer)) +
+    dl('l-staff', S.salaries.map(r => r.name));
+}
+
+// ================= Charts =================
+function niceMax(m) { if (m <= 0) return 1; const p = 10 ** Math.floor(Math.log10(m)); for (const f of [1, 2, 2.5, 5, 10]) if (f * p >= m) return f * p; return 10 * p; }
+const kShort = n => n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '') + 'M' : n >= 1e3 ? (n / 1e3).toFixed(n % 1000 ? 1 : 0).replace('.0', '') + 'k' : String(Math.round(n));
+function barChart(items, series) {
+  const W = 640, H = 220, padL = 44, padB = 26, padT = 10;
+  const max = niceMax(Math.max(1, ...items.flatMap(it => series.map(s => it[s.k]))));
+  const y = v => padT + (H - padT - padB) * (1 - v / max);
+  const step = (W - padL - 8) / Math.max(1, items.length);
+  const bw = Math.min(22, step / (series.length + 1));
+  let g = '';
+  for (let i = 0; i <= 4; i++) { const v = max * i / 4; g += `<line x1="${padL}" x2="${W - 4}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${padL - 6}" y="${y(v) + 4}" font-size="10.5" text-anchor="end" fill="var(--muted)">K ${kShort(v)}</text>`; }
+  items.forEach((it, i) => {
+    const cx = padL + i * step + step / 2;
+    series.forEach((s, j) => {
+      const x = cx - (series.length * bw) / 2 + j * bw;
+      const v = it[s.k];
+      if (v > 0) g += `<rect x="${x + 1}" y="${y(v)}" width="${bw - 2}" height="${y(0) - y(v)}" rx="2" fill="${s.color}"><title>${s.label}: ${K0(v)}</title></rect>`;
+    });
+    g += `<text x="${cx}" y="${H - 8}" font-size="11" text-anchor="middle" fill="var(--muted)">${it.label}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Bar chart">${g}</svg>
+    <div class="legend">${series.map(s => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join('')}</div>`;
+}
+
+// ================= Views =================
+const V = {};
+let selMonth = null;
+
+V.dashboard = () => {
+  const months = allMonths();
+  const cur = todayStr().slice(0, 7);
+  if (!selMonth) selMonth = months.includes(cur) ? cur : months[months.length - 1] || cur;
+  const m = money(d => String(d || '').startsWith(selMonth), true);
+  const salesRows = S.sales.filter(r => String(r.date || '').startsWith(selMonth));
+  const paid = sum(salesRows.filter(r => r.status === 'Paid'), r => num(r.grams) * num(r.price));
+  const unpaid = m.sales - paid;
+  const st = stockMoves();
+  const owe = sum(Object.values(deriveIntake().bal), v => v);
+  const merc = S.mercury.filter(r => String(r.date || '').startsWith(selMonth));
+  const byMachine = {}; merc.forEach(r => byMachine[r.machine] = (byMachine[r.machine] || 0) + num(r.grams));
+  const top = Object.entries(byMachine).sort((a, b) => b[1] - a[1])[0];
+  const outLines = [['Paid to customers for gold', m.gold, '#intake'], ['Advances given', m.advances, '#advances'], ['Daily expenses', m.expenses, '#expenses'], ['Mercury', m.mercury, '#mercury'], ['Salaries', m.salaries, '#salaries']];
+  const maxOut = Math.max(1, ...outLines.map(l => l[1]));
+  // last 8 weeks
+  const weeks = [];
+  const lastDate = [...S.sales, ...S.expenses, ...S.intake].map(r => r.date).filter(Boolean).sort().pop() || todayStr();
+  let w = monday(lastDate);
+  for (let i = 0; i < 8; i++) { weeks.unshift(w); const d = new Date(w + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - 7); w = d.toISOString().slice(0, 10); }
+  const wk = weeks.map(ws => { const mm = money(d => d && monday(d) === ws, false); return { label: dshort(ws), inn: mm.sales, out: mm.out }; });
+
+  return head('Overview', 'What came in and what went out. Click a block to see the details.',
+    `<label class="note" for="monthSel">Month</label><select class="btn" id="monthSel">${months.map(x => `<option value="${x}"${x === selMonth ? ' selected' : ''}>${monthName(x)}</option>`).join('')}</select>`) + `
+  <div class="grid g-2e">
+    <a class="card big in" href="#sales">
+      <div class="top"><span class="ic">${svg(I.in)}</span><span class="title">Money in</span><span class="open">Open sales →</span></div>
+      <div class="amount">${K0(m.sales)}</div>
+      <div class="lines">
+        <div class="line"><span>Gold sales, paid</span><span class="v">${K0(paid)}</span><div class="track"><div class="fill in" style="width:${m.sales ? paid / m.sales * 100 : 0}%"></div></div></div>
+        <div class="line"><span>Gold sales, not paid yet</span><span class="v">${K0(unpaid)}</span><div class="track"><div class="fill" style="width:${m.sales ? unpaid / m.sales * 100 : 0}%"></div></div></div>
+        <div class="note">${salesRows.length} sale${salesRows.length === 1 ? '' : 's'} · ${G(sum(salesRows, r => num(r.grams)))} sold</div>
+      </div>
+    </a>
+    <a class="card big out" href="#expenses">
+      <div class="top"><span class="ic">${svg(I.out)}</span><span class="title">Money out</span><span class="open">Open expenses →</span></div>
+      <div class="amount">${K0(m.out)}</div>
+      <div class="lines">${outLines.map(l => `<div class="line"><span>${l[0]}</span><span class="v">${K0(l[1])}</span><div class="track"><div class="fill out" style="width:${l[1] / maxOut * 100}%"></div></div></div>`).join('')}</div>
+    </a>
   </div>
-  <div class="card">${table([
-    { h: 'Name', f: r => r.name }, { h: 'Job', f: r => r.role }, { h: 'Salary', num: 1, f: r => usd(r.salary) },
-    { h: 'Bonus', num: 1, f: r => r.bonus ? '+ ' + usd(r.bonus) : '–' }, { h: 'Salary advance', num: 1, f: r => r.adv ? '− ' + usd(r.adv) : '–' },
-    { h: 'To pay', num: 1, f: r => `<b>${usd(r.salary + r.bonus - r.adv)}</b>` }, { h: 'Status', f: () => statusChip('Unpaid') }
-  ], rows)}</div>`;
-};
-
-V.leave = () => head('Days off', 'Requests, sick days and remaining days per employee.', save('Add day off')) + `
-  <div class="card"><h2>Requests</h2>${table([
-    { h: 'Employee', f: r => r.name }, { h: 'Type', f: r => statusChip(r.type) }, { h: 'From', f: r => r.from }, { h: 'To', f: r => r.to },
-    { h: 'Days', num: 1, f: r => r.days }, { h: 'Status', f: r => statusChip(r.status) },
-    { h: '', f: r => r.status === 'Waiting' ? `<button class="btn" data-save="Approved">Approve</button>` : '' }
-  ], leaves)}</div>
-  <div class="card"><h2>Days off left this year</h2><div class="bars">${staff.map(s => `
-    <div class="bar-row"><span>${s.name}</span><span class="v">${s.leaveLeft} of 18</span><div class="track"><div class="fill" style="width:${s.leaveLeft / 18 * 100}%"></div></div></div>`).join('')}</div></div>`;
-
-V.cash = () => {
-  let bal = 3303;
-  const rows = [...cashbook].reverse().map(r => { bal += r.inn - r.out; return { ...r, bal }; }).reverse();
-  return head('Cash in and out', 'Every movement of cash. The balance should match the safe.', save('Count the safe')) + `
+  <div class="result"><span>Result for ${monthName(selMonth)} (money in − money out)</span><b class="${m.net >= 0 ? 'c-in' : 'c-out'}">${m.net < 0 ? '− ' : ''}${K0(Math.abs(m.net))}</b></div>
   <div class="grid g-kpi">
-    <div class="card kpi"><span class="label">Balance now</span><span class="value">${usd(rows[0].bal)}</span></div>
-    <div class="card kpi"><span class="label">In this week</span><span class="value up">${usd(23590)}</span></div>
-    <div class="card kpi"><span class="label">Out this week</span><span class="value down">${usd(8481)}</span></div>
+    <a class="card kpi" href="#stock" style="text-decoration:none;color:inherit"><span class="label">Gold in stock now</span><span class="value">${G(st.now)}</span><span class="note">Updates itself after every sale</span></a>
+    <a class="card kpi" href="#balances" style="text-decoration:none;color:inherit"><span class="label">Customers still owe us</span><span class="value c-out">${K0(owe)}</span><span class="note">Open advances</span></a>
+    <a class="card kpi" href="#mercury" style="text-decoration:none;color:inherit"><span class="label">Mercury this month</span><span class="value">${G(sum(merc, r => num(r.grams)))}</span><span class="note">${top ? `Most used by ${esc(top[0])} (${Math.round(top[1] / Math.max(1, sum(merc, r => num(r.grams))) * 100)}%)` : 'No mercury used'}</span></a>
   </div>
-  <div class="card">${table([
-    { h: 'Date', f: r => r.date }, { h: 'Description', f: r => r.desc }, { h: 'In', num: 1, f: r => r.inn ? `<span class="up">${usd(r.inn)}</span>` : '' },
-    { h: 'Out', num: 1, f: r => r.out ? `<span class="down">${usd(r.out)}</span>` : '' }, { h: 'Balance', num: 1, f: r => usd(r.bal) }
-  ], rows)}</div>`;
+  <div class="card chart"><h2>Last 8 weeks<a class="link" href="#report-week">Weekly report →</a></h2>
+    ${barChart(wk, [{ k: 'inn', label: 'Money in', color: 'var(--in)' }, { k: 'out', label: 'Money out (without salaries)', color: 'var(--out)' }])}</div>`;
 };
 
-V.statement = () => head('Supplier statement', 'Everything with one supplier: purchases, advances and payments.', `<button class="btn" data-save="Shared by WhatsApp">Share by WhatsApp</button>`) + `
-  <div class="card"><div class="form" style="max-width:520px"><div class="field"><label for="st-sup">Supplier</label><select id="st-sup">${opts(['Kibo Miners Co-op'])}</select></div>
-  <div class="field"><label for="st-per">Period</label><select id="st-per">${opts(['October – November 2026'])}</select></div></div></div>
-  <div class="card">${table([
-    { h: 'Date', f: r => r[0] }, { h: 'What', f: r => r[1] }, { h: 'Bought', num: 1, f: r => r[2] ? usd(r[2]) : '' },
-    { h: 'Advance', num: 1, f: r => r[3] ? usd(r[3]) : '' }, { h: 'Paid', num: 1, f: r => r[4] ? usd(r[4]) : '' }, { h: 'Advance open', num: 1, f: r => usd(r[5]) }
-  ], [
-    ['02 Oct', 'Advance A-208 (cash)', 0, 800, 0, 800], ['20 Oct', 'Advance A-214 (fuel)', 0, 400, 0, 1200],
-    ['31 Oct', 'Purchase P-1102 · 380 kg tin', 5396, 0, 5396, 1200], ['14 Nov', 'Purchase P-1187 · 412.5 kg tin', 5857, 0, 5857, 1200]
-  ])}<div class="calc-row total" style="margin-top:6px"><span>Still open</span><span>${usd(1200)}</span></div></div>`;
+V.sales = () => head('Sales sheet', 'Every sale of gold. Gold sold here is taken off the stock automatically.') + sheetBlock('sales', 'Add sale');
 
-V.monthly = () => {
-  const lines = [['Sales', 45360, 1], ['Purchases from suppliers', -52480, 0], ['Daily expenses', -3264, 0], ['Salaries', -7240, 0]];
-  const stockValue = 21800;
-  return head('Monthly summary', 'November 2026 so far.') + `
-  <div class="grid g-2">
-    <div class="card"><h2>Money in and out</h2><div class="calc">${lines.map(l => `<div class="calc-row"><span>${l[0]}</span><span class="${l[1] < 0 ? 'down' : 'up'}">${l[1] < 0 ? '− ' : ''}${usd(Math.abs(l[1]))}</span></div>`).join('')}
-      <div class="calc-row"><span>Stock value increase (bought, not yet sold)</span><span class="up">${usd(stockValue)}</span></div>
-      <div class="calc-row total"><span>Result</span><span>${usd(45360 - 52480 - 3264 - 7240 + stockValue)}</span></div></div></div>
-    <div class="card"><h2>Expenses by type</h2><div class="bars">${[['Fuel', 1420], ['Food', 980], ['Repairs', 410], ['Gas', 214], ['Transport', 240]].map(x => `
-      <div class="bar-row"><span>${x[0]}</span><span class="v">${usd(x[1])}</span><div class="track"><div class="fill gold" style="width:${x[1] / 1420 * 100}%"></div></div></div>`).join('')}</div></div>
-  </div>`;
+function periodReport(kind) {
+  const keyOf = d => kind === 'week' ? monday(d) : d.slice(0, 7);
+  const keys = [...new Set([...S.sales, ...S.expenses, ...S.intake, ...S.advances, ...S.mercury].map(r => r.date).filter(Boolean).map(keyOf))].sort();
+  const rows = keys.map(k => {
+    const mm = money(d => d && keyOf(d) === k, kind === 'month');
+    const s = S.sales.filter(r => r.date && keyOf(r.date) === k);
+    return { k, label: kind === 'week' ? 'Week of ' + dshort(k) : monthName(k), short: kind === 'week' ? dshort(k) : monthName(k).split(' ')[0].slice(0, 3), count: s.length, grams: sum(s, r => num(r.grams)), ...mm };
+  });
+  const recent = kind === 'week' ? rows.slice(-10) : rows;
+  return `<div class="card chart"><h2>Sales per ${kind}</h2>${barChart(recent.map(r => ({ label: r.short, inn: r.sales, out: r.out })), [{ k: 'inn', label: 'Sales (money in)', color: 'var(--in)' }, { k: 'out', label: kind === 'week' ? 'Money out (without salaries)' : 'Money out', color: 'var(--out)' }])}</div>
+  <div class="card">${dataTable([
+    { h: kind === 'week' ? 'Week' : 'Month', f: r => r.label }, { h: 'Sales', num: 1, f: r => r.count }, { h: 'Gold sold', num: 1, f: r => G(r.grams) },
+    { h: 'Money in', num: 1, f: r => `<span class="c-in">${K0(r.sales)}</span>` }, { h: 'Money out', num: 1, f: r => `<span class="c-out">${K0(r.out)}</span>` },
+    { h: 'Result', num: 1, f: r => `<b class="${r.net >= 0 ? 'c-in' : 'c-out'}">${r.net < 0 ? '− ' : ''}${K0(Math.abs(r.net))}</b>` }
+  ], [...rows].reverse(), ['Total', sum(rows, r => r.count), G(sum(rows, r => r.grams)), K0(sum(rows, r => r.sales)), K0(sum(rows, r => r.out)), K0(sum(rows, r => r.net))])}
+  ${kind === 'week' ? '<p class="note" style="margin:10px 0 0">Salaries are paid monthly, so they are counted in the monthly report only.</p>' : ''}</div>`;
+}
+V['report-week'] = () => head('Weekly report', 'Sales and costs per week (Monday to Sunday). Calculated from the sheets, nothing to type here.') + periodReport('week');
+V['report-month'] = () => head('Monthly report', 'Sales and costs per month, including salaries.') + periodReport('month');
+
+V.expenses = () => head('Daily expenses', 'Food, fuel, gas, transport, repairs and other daily costs.') + sheetBlock('expenses', 'Add expense');
+
+V.mercury = () => head('Mercury use', 'Write down how much mercury each machine uses. The cost and the machine that uses the most are calculated automatically.') + `
+  <div class="grid g-2" id="mercSummary"></div>` + sheetBlock('mercury', 'Add mercury use');
+function renderMercurySummary() {
+  const host = document.getElementById('mercSummary'); if (!host) return;
+  const total = sum(S.mercury, r => num(r.grams));
+  const per = {}, perUse = {};
+  S.mercury.forEach(r => { per[r.machine || '?'] = (per[r.machine || '?'] || 0) + num(r.grams); perUse[r.use || 'Other'] = (perUse[r.use || 'Other'] || 0) + num(r.grams); });
+  const list = Object.entries(per).sort((a, b) => b[1] - a[1]);
+  const uses = Object.entries(perUse).sort((a, b) => b[1] - a[1]);
+  const name = no => (S.machines.find(m => norm(m.no) === norm(no)) || {}).name || '';
+  host.innerHTML = `<div class="card"><h2>Per machine</h2>
+    ${list.length ? `<div class="callout" style="margin-bottom:12px">${esc(list[0][0])} ${esc(name(list[0][0]))} uses the most mercury: ${Math.round(list[0][1] / Math.max(1, total) * 100)}% of all.</div>` : ''}
+    <div class="lines">${list.map(([no, g]) => `<div class="line"><span>${esc(no)} · ${esc(name(no))}</span><span class="v">${G(g)} · ${K0(g * num(S.settings.mercuryPrice))}</span><div class="track"><div class="fill" style="width:${g / Math.max(1, list[0][1]) * 100}%"></div></div></div>`).join('')}</div></div>
+    <div class="card"><h2>Where it goes</h2><div class="lines">${uses.map(([u, g]) => `<div class="line"><span>${esc(u)}</span><span class="v">${Math.round(g / Math.max(1, total) * 100)}%</span><div class="track"><div class="fill out" style="width:${g / Math.max(1, total) * 100}%"></div></div></div>`).join('')}</div>
+    <p class="note" style="margin:12px 0 0">Total ${G(total)} · ${K(total * num(S.settings.mercuryPrice))} at ${K(num(S.settings.mercuryPrice))} per gram</p></div>`;
+}
+
+V.salaries = () => head('Salaries', 'Monthly salary and days off per employee.') + sheetBlock('salaries', 'Add employee');
+
+V.advances = () => head('Advances given', 'Money paid to a customer before they bring gold. It is taken off automatically the next time they bring gold.') + sheetBlock('advances', 'Add advance');
+
+V.intake = () => head('Gold brought in', 'A customer brings gold. The open advance, transport and machine cost are taken off, and you see what to pay.') + `
+  <div class="legend-row"><span><i style="background:var(--surface)"></i>You type</span><span><i style="background:var(--calc)"></i>Calculated</span>
+  <span>Pay to customer = gold value − advance before − transport − machine cost</span></div>` + sheetBlock('intake', 'Add gold brought in');
+
+V.balances = () => {
+  const { rows, bal } = deriveIntake();
+  const names = {};
+  [...S.advances.map(r => r.customer), ...S.intake.map(r => r.customer)].forEach(n => { if (String(n || '').trim()) names[norm(n)] = n.trim(); });
+  const list = Object.keys(names).map(k => ({
+    name: names[k],
+    adv: sum(S.advances.filter(r => norm(r.customer) === k), r => num(r.amount)),
+    grams: sum(S.intake.filter(r => norm(r.customer) === k), r => num(r.grams)),
+    paid: sum(S.intake.map((r, i) => ({ r, d: rows[i] })).filter(x => norm(x.r.customer) === k), x => Math.max(0, x.d ? x.d.pay : 0)),
+    owe: bal[k] || 0
+  })).sort((a, b) => b.owe - a.owe);
+  return head('Customer balances', 'Per customer: advances given, gold brought, money paid and what they still owe. Calculated automatically.') +
+    `<div class="card">${dataTable([
+      { h: 'Customer', f: r => `<b>${esc(r.name)}</b>` }, { h: 'Advances given', num: 1, f: r => K0(r.adv) }, { h: 'Gold brought', num: 1, f: r => G(r.grams) },
+      { h: 'Paid for gold', num: 1, f: r => K0(r.paid) }, { h: 'Still owes us', num: 1, f: r => r.owe > 0 ? chip(K0(r.owe), 'out') : chip('Nothing', 'in') }
+    ], list, ['Total', K0(sum(list, r => r.adv)), G(sum(list, r => r.grams)), K0(sum(list, r => r.paid)), K0(sum(list, r => r.owe))])}</div>`;
 };
 
-V.users = () => head('Users and roles', 'Who can log in and what they may do.', save('Invite user')) +
-  `<div class="card">${table([
-    { h: 'Name', f: r => r[0] }, { h: 'Role', f: r => chip(r[1], 'neutral') }, { h: 'Can do', f: r => r[2] }, { h: 'Last login', f: r => r[3] }
-  ], [
-    ['Ama Mensah', 'Owner', 'Everything', 'Today 07:42'], ['Ruth Kamau', 'Cashier', 'Purchases, advances, cash, expenses', 'Today 08:10'],
-    ['David Banda', 'Store keeper', 'Stockpiles, purchases (no payments)', 'Yesterday'], ['Peter Nkosi', 'Supervisor', 'Expenses, stock, days off', 'Today 06:55']
-  ])}</div>`;
+V.stock = () => {
+  const st = stockMoves();
+  const inn = sum(st.moves, m => m.inn), out = sum(st.moves, m => m.out);
+  return head('Gold in stock', 'Comes automatically from "Gold brought in" (stock goes up) and the "Sales sheet" (stock goes down). Nothing to type here.') + `
+  <div class="grid g-kpi">
+    <div class="card kpi"><span class="label">Available now</span><span class="value">${G(st.now)}</span><span class="note">Worth about ${K0(st.now * num(S.settings.sellPrice))} at today's selling price</span></div>
+    <div class="card kpi"><span class="label">Brought in by customers</span><span class="value c-in">+ ${G(inn)}</span></div>
+    <div class="card kpi"><span class="label">Sold</span><span class="value c-out">− ${G(out)}</span></div>
+    <div class="card kpi"><span class="label">Opening stock</span><span class="value">${G(num(S.settings.opening))}</span><span class="note">Change in Setup</span></div>
+  </div>
+  <div class="card"><h2>Every movement</h2>${dataTable([
+    { h: 'Date', f: r => dshort(r.date) }, { h: 'What', f: r => chip(r.what, r.inn ? 'in' : 'out') }, { h: 'Customer / buyer', f: r => esc(r.who) },
+    { h: 'In', num: 1, f: r => r.inn ? `<span class="c-in">+ ${G(r.inn)}</span>` : '' }, { h: 'Out', num: 1, f: r => r.out ? `<span class="c-out">− ${G(r.out)}</span>` : '' },
+    { h: 'Stock after', num: 1, f: r => `<b>${G(r.bal)}</b>` }
+  ], [...st.moves].reverse())}</div>`;
+};
 
-V.minerals = () => head('Minerals and prices', 'Today\'s buying prices. Change them when the market moves.', save('Save prices')) +
-  `<div class="card">${table([
-    { h: 'Mineral', f: r => `<b>${r.name}</b>` }, { h: 'Reference grade', f: r => r.grade }, { h: 'Unit', f: r => r.unit },
-    { h: 'Buying price', num: 1, f: r => usd2(r.price) + ' / ' + r.unit }
-  ], minerals)}</div>`;
+V.prices = () => {
+  const f = (k, label, help, step = '0.01') => `<div class="field"><label for="set-${k}">${label}</label><input id="set-${k}" data-set="${k}" inputmode="decimal" value="${esc(S.settings[k])}"><small>${help}</small></div>`;
+  return head('Prices and fixed costs', 'Change these when prices move. New rows use these values; old rows keep their own price.') + `
+  <div class="card" style="max-width:760px"><div class="form">
+    ${f('buyPrice', 'Buying price per gram (K)', 'Used when a customer brings gold')}
+    ${f('sellPrice', 'Selling price per gram (K)', 'Used for new sales')}
+    ${f('transport', 'Transport, fixed amount (K)', 'Taken off every time gold is brought in')}
+    ${f('mercuryPrice', 'Mercury price per gram (K)', 'Used to calculate mercury cost')}
+    ${f('opening', 'Opening gold stock (g)', 'Gold you already had before using this website')}
+  </div></div>
+  <div class="card" style="max-width:760px"><h2>Test data</h2><p class="note" style="margin:0 0 12px">Everything you type is saved in this browser only. This button puts the example data back.</p>
+  <button class="btn" id="resetBtn">Reset example data</button></div>`;
+};
+V.machines = () => head('Machines', 'Each machine has a number and a fixed cost. The fixed cost is taken off when gold goes through that machine.') + sheetBlock('machines', 'Add machine');
 
-// ---------- Router ----------
+// ================= Router =================
 const label = {};
 NAV.forEach(n => n.children ? n.children.forEach(c => label[c.id] = [n.label, c.label]) : label[n.id] = [null, n.label]);
 const openGroups = new Set();
-
 function renderNav(active) {
   document.getElementById('nav').innerHTML = NAV.map((n, gi) => {
     if (!n.children) return `<a class="nav-item ${active === n.id ? 'active' : ''}" href="#${n.id}">${svg(I[n.icon])}${n.label}</a>`;
@@ -620,46 +732,72 @@ function renderNav(active) {
       <div class="sub">${n.children.map(c => `<a href="#${c.id}" class="${active === c.id ? 'active' : ''}">${c.label}</a>`).join('')}</div></div>`;
   }).join('');
 }
-
+function currentId() { const h = location.hash.slice(1); return V[h] ? h : 'dashboard'; }
 function route() {
-  const id = V[location.hash.slice(1)] ? location.hash.slice(1) : 'dashboard';
+  const id = currentId();
   NAV.forEach((n, gi) => { if (n.children && n.children.some(c => c.id === id)) openGroups.add(gi); });
   renderNav(id);
   const [grp, name] = label[id];
   document.getElementById('crumb').innerHTML = grp ? `${grp} / <b>${name}</b>` : `<b>${name}</b>`;
   document.getElementById('view').innerHTML = V[id]();
+  if (SHEETS[id]) mountSheet(id);
+  if (id === 'mercury') renderMercurySummary();
   document.getElementById('app').classList.remove('menu-open');
-  if (id === 'purchase-new') { buyCalc(); document.getElementById('buyForm').addEventListener('input', buyCalc); }
-  if (id === 'sale-new') {
-    const f = () => { document.getElementById('s-total').value = usd2((+document.getElementById('s-qty').value || 0) * (+document.getElementById('s-price').value || 0)); };
-    f(); document.getElementById('saleForm').addEventListener('input', f);
-  }
   window.scrollTo(0, 0);
 }
 
 let toastTimer;
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg + ' (example only, nothing stored)';
-  el.hidden = false;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; }, 2400);
+function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => el.hidden = true, 2400); }
+
+// ================= Events =================
+function onCellChange(e) {
+  const t = e.target;
+  const table = t.closest('table.sheet');
+  if (table && t.dataset.k !== undefined) {
+    const key = table.dataset.sheet;
+    const row = S[key][+t.dataset.r];
+    const col = SHEETS[key].cols.find(c => c.k === t.dataset.k);
+    row[t.dataset.k] = col.t === 'num' ? (t.value.trim() === '' ? '' : num(t.value)) : t.value;
+    persist();
+    refreshSheet(key);
+    return;
+  }
+  if (t.dataset.set) { S.settings[t.dataset.set] = num(t.value); persist(); return; }
+  if (t.id === 'monthSel') { selMonth = t.value; route(); }
 }
+document.addEventListener('input', e => { if (e.target.closest('table.sheet') || e.target.dataset.set) onCellChange(e); });
+document.addEventListener('change', onCellChange);
+document.addEventListener('focusout', e => { if (e.target.closest('table.sheet')) renderLists(); });
+
+document.addEventListener('keydown', e => {
+  const t = e.target, table = t.closest && t.closest('table.sheet');
+  if (!table || t.dataset.k === undefined) return;
+  const isSelect = t.tagName === 'SELECT';
+  let d = 0;
+  if (e.key === 'Enter') d = e.shiftKey ? -1 : 1;
+  else if (!isSelect && e.key === 'ArrowDown') d = 1;
+  else if (!isSelect && e.key === 'ArrowUp') d = -1;
+  if (!d) return;
+  e.preventDefault();
+  const key = table.dataset.sheet, r = +t.dataset.r + d, k = t.dataset.k;
+  const next = table.querySelector(`[data-r="${r}"][data-k="${k}"]`);
+  if (next) next.focus();
+  else if (d > 0) addRow(key, k);
+});
 
 document.addEventListener('click', e => {
   const g = e.target.closest('[data-group]');
-  if (g) { const i = +g.dataset.group; openGroups.has(i) ? openGroups.delete(i) : openGroups.add(i); renderNav(location.hash.slice(1) || 'dashboard'); return; }
-  const go = e.target.closest('[data-go]');
-  if (go) { location.hash = go.dataset.go; return; }
-  const s = e.target.closest('[data-save]');
-  if (s) { e.preventDefault(); toast(s.dataset.save); return; }
-  const c = e.target.closest('[data-cat]');
-  if (c) { expFilter = c.dataset.cat; route(); return; }
+  if (g) { const i = +g.dataset.group; openGroups.has(i) ? openGroups.delete(i) : openGroups.add(i); renderNav(currentId()); return; }
+  const add = e.target.closest('[data-add]');
+  if (add) { addRow(add.dataset.add); return; }
+  const del = e.target.closest('[data-del]');
+  if (del) { const key = del.closest('table.sheet').dataset.sheet; S[key].splice(+del.dataset.del, 1); persist(); mountSheet(key); toast('Row deleted'); return; }
+  if (e.target.id === 'resetBtn') { S = JSON.parse(JSON.stringify(EXAMPLE)); persist(); selMonth = null; route(); toast('Example data is back'); }
 });
 document.getElementById('menuBtn').addEventListener('click', () => document.getElementById('app').classList.add('menu-open'));
 document.getElementById('scrim').addEventListener('click', () => document.getElementById('app').classList.remove('menu-open'));
-document.addEventListener('submit', e => e.preventDefault());
 window.addEventListener('hashchange', route);
+renderLists();
 route();
 </script>
 
