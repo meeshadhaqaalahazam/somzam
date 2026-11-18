@@ -196,7 +196,7 @@ table.sheet { border-collapse: collapse; width: max-content; min-width: 100%; fo
       <div><div class="brand-name">SomZam</div><div class="brand-sub">Mining office · Zambia</div></div>
     </div>
     <nav class="nav" id="nav"></nav>
-    <div class="side-foot">Test version. Changes are saved in this browser only.</div>
+    <div class="side-foot">Saved in this browser only. Download a backup every day (Setup → Prices and fixed costs).</div>
   </aside>
   <div class="scrim" id="scrim"></div>
   <div class="main">
@@ -204,7 +204,7 @@ table.sheet { border-collapse: collapse; width: max-content; min-width: 100%; fo
       <button class="menu-btn" id="menuBtn" aria-label="Open menu"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
       <div class="crumb" id="crumb"></div>
       <div class="spacer"></div>
-      <span class="test-pill">Test version · example data</span>
+      <span class="test-pill">Saved in this browser only</span>
     </header>
     <main class="content" id="view"></main>
   </div>
@@ -244,86 +244,20 @@ const NAV = [
 
 // ================= Example data (Zambian kwacha, grams) =================
 const EXAMPLE = {
-  settings: { buyPrice: 1400, machineCost: 750, transport: 150, sellPrice: 1650, milkPrice: 3.2 },
-  start: { date: '2026-10-01', cash: 60000, milk: 1500, minerals: 5 },
-  startAdv: [
-    { customer: 'Mwila & Sons', amount: 2000, note: 'From the old book' },
-    { customer: 'Bwalya Brothers', amount: 1500, note: 'From the old book' }
-  ],
-  machines: [
-    { no: 'M1', name: 'Ball mill 1', startMilk: 120 },
-    { no: 'M2', name: 'Ball mill 2', startMilk: 80 },
-    { no: 'M3', name: 'Sluice + concentrator', startMilk: 60 },
-    { no: 'M4', name: 'Ball mill 3', startMilk: 0 },
-    { no: 'M5', name: 'Concentrator 2', startMilk: 40 }
-  ],
-  advances: [
-    { date: '2026-10-03', customer: 'Chanda Mining Group', amount: 5000, note: 'Cash' },
-    { date: '2026-10-12', customer: 'Mwila & Sons', amount: 3000, note: 'Fuel money' },
-    { date: '2026-10-25', customer: 'Kabwe Mining Co-op', amount: 8000, note: 'Cash' },
-    { date: '2026-11-04', customer: 'Chanda Mining Group', amount: 4000, note: 'Cash' },
-    { date: '2026-11-10', customer: 'Bwalya Brothers', amount: 2500, note: 'Tools' },
-    { date: '2026-11-15', customer: 'Mwila & Sons', amount: 3000, note: 'Cash' }
-  ],
-  intake: [
-    { date: '2026-10-08', customer: 'Chanda Mining Group', grams: 12.4, price: 1400, transport: 150, mc: 750, priv: '' },
-    { date: '2026-10-18', customer: 'Mwila & Sons', grams: 6.2, price: 1400, transport: 150, mc: 750, priv: 500 },
-    { date: '2026-10-30', customer: 'Kabwe Mining Co-op', grams: 2.1, price: 1400, transport: 150, mc: 750, priv: '' },
-    { date: '2026-11-06', customer: 'Chanda Mining Group', grams: 9.8, price: 1400, transport: 150, mc: 750, priv: 1000 },
-    { date: '2026-11-12', customer: 'Kabwe Mining Co-op', grams: 7.5, price: 1400, transport: 150, mc: 750, priv: '' },
-    { date: '2026-11-14', customer: 'Bwalya Brothers', grams: 4.3, price: 1400, transport: 150, mc: 750, priv: '' }
-  ],
-  sales: [
-    { date: '2026-10-21', buyer: 'Lusaka Mineral Traders', grams: 15, price: 1600, status: 'Paid' },
-    { date: '2026-11-03', buyer: 'Copperbelt Refiners', grams: 8, price: 1650, status: 'Paid' },
-    { date: '2026-11-13', buyer: 'Lusaka Mineral Traders', grams: 10, price: 1650, status: 'Not paid yet' }
-  ],
-  expenses: [
-    { date: '2026-10-06', category: 'Fuel', desc: 'Diesel generator 60 L', by: 'Peter Mulenga', amount: 1650 },
-    { date: '2026-10-14', category: 'Food', desc: 'Mealie meal and relish, week', by: 'Grace Banda', amount: 980 },
-    { date: '2026-10-22', category: 'Machine repair', desc: 'Ball mill 2 bearing', by: 'Peter Mulenga', amount: 1200 },
-    { date: '2026-10-29', category: 'Gas', desc: 'Gas cylinder refill', by: 'Grace Banda', amount: 420 },
-    { date: '2026-11-02', category: 'Fuel', desc: 'Diesel generator 70 L', by: 'Peter Mulenga', amount: 1925 },
-    { date: '2026-11-05', category: 'Food', desc: 'Lunch for 18 workers', by: 'Grace Banda', amount: 540 },
-    { date: '2026-11-09', category: 'Transport', desc: 'Truck to Kabwe (spares)', by: 'Joseph Phiri', amount: 800 },
-    { date: '2026-11-11', category: 'Gas', desc: 'Gas cylinder refill', by: 'Grace Banda', amount: 420 },
-    { date: '2026-11-13', category: 'Food', desc: 'Lunch for 17 workers', by: 'Grace Banda', amount: 510 },
-    { date: '2026-11-14', category: 'Fuel', desc: 'Petrol water pump 20 L', by: 'Peter Mulenga', amount: 560 }
-  ],
-  milkBought: [
-    { date: '2026-10-05', from: 'Lusaka supplier', grams: 1000, amount: 3200 },
-    { date: '2026-11-08', from: 'Lusaka supplier', grams: 800, amount: 2600 }
-  ],
-  machineMilk: [
-    { date: '2026-11-12', machine: 'M1', added: 100, used: 150, left: 65 },
-    { date: '2026-11-12', machine: 'M2', added: 80, used: 120, left: 38 },
-    { date: '2026-11-12', machine: 'M3', added: 50, used: 90, left: 20 },
-    { date: '2026-11-12', machine: 'M4', added: 120, used: 100, left: 18 },
-    { date: '2026-11-12', machine: 'M5', added: 60, used: 80, left: 20 },
-    { date: '2026-11-13', machine: 'M1', added: 120, used: 140, left: 42 },
-    { date: '2026-11-13', machine: 'M2', added: 100, used: 110, left: 25 },
-    { date: '2026-11-13', machine: 'M3', added: 70, used: 75, left: 15 },
-    { date: '2026-11-13', machine: 'M4', added: 90, used: 95, left: 10 },
-    { date: '2026-11-13', machine: 'M5', added: 80, used: 85, left: 14 },
-    { date: '2026-11-14', machine: 'M1', added: 110, used: 130, left: '' },
-    { date: '2026-11-14', machine: 'M2', added: 90, used: 100, left: 15 },
-    { date: '2026-11-14', machine: 'M3', added: 60, used: 70, left: 5 },
-    { date: '2026-11-14', machine: 'M4', added: 100, used: 95, left: 12 },
-    { date: '2026-11-14', machine: 'M5', added: 70, used: 72, left: 12 }
-  ],
-  salaries: [
-    { name: 'Peter Mulenga', job: 'Site supervisor', salary: 6500, daysOff: 1, status: 'Not paid yet', paidOn: '' },
-    { name: 'Esther Zulu', job: 'Cashier', salary: 4500, daysOff: 0, status: 'Not paid yet', paidOn: '' },
-    { name: 'Joseph Phiri', job: 'Machine operator', salary: 3800, daysOff: 2, status: 'Not paid yet', paidOn: '' },
-    { name: 'Daniel Tembo', job: 'Machine operator', salary: 3800, daysOff: 0, status: 'Not paid yet', paidOn: '' },
-    { name: 'Moses Lungu', job: 'Washer', salary: 2800, daysOff: 1, status: 'Not paid yet', paidOn: '' },
-    { name: 'Ruth Mwale', job: 'Washer', salary: 2800, daysOff: 0, status: 'Not paid yet', paidOn: '' },
-    { name: 'Grace Banda', job: 'Cook', salary: 2500, daysOff: 0, status: 'Not paid yet', paidOn: '' },
-    { name: 'Kelvin Sakala', job: 'Security', salary: 2600, daysOff: 3, status: 'Not paid yet', paidOn: '' }
-  ]
+  settings: { buyPrice: 1400, machineCost: 750, transport: '', sellPrice: '', milkPrice: '' },
+  start: { date: new Date().toISOString().slice(0, 10), cash: '', milk: '', minerals: '' },
+  startAdv: [],
+  machines: [1, 2, 3, 4, 5].map(n => ({ no: 'M' + n, name: 'Machine ' + n, startMilk: '' })),
+  advances: [],
+  intake: [],
+  sales: [],
+  expenses: [],
+  milkBought: [],
+  machineMilk: [],
+  salaries: []
 };
 
-const STORE_KEY = 'somzam-v3';
+const STORE_KEY = 'somzam-live';
 let S;
 function load() {
   let saved = null;
@@ -687,8 +621,8 @@ function nowKpis() {
 }
 
 V.dashboard = () => {
-  const months = allMonths();
   const cur = todayStr().slice(0, 7);
+  const months = allMonths(); if (!months.includes(cur)) months.push(cur);
   if (!selMonth) selMonth = months.includes(cur) ? cur : months[months.length - 1] || cur;
   const inMonth = d => String(d || '').startsWith(selMonth);
   const m = money(inMonth, true);
@@ -941,7 +875,7 @@ V.stock = () => {
 
 V.prices = () => {
   const f = (k, label, help) => `<div class="field"><label for="set-${k}">${label}</label><input id="set-${k}" data-set="${k}" inputmode="decimal" value="${esc(S.settings[k])}"><small>${help}</small></div>`;
-  return head('Prices and fixed costs', 'New rows use these values; old rows keep their own price.') + `
+  return head('Prices and fixed costs', 'New rows use these values; old rows keep their own price. Fill in the selling price and milk price.') + `
   <div class="card" style="max-width:760px"><div class="form">
     ${f('buyPrice', 'Price per gram of minerals (K)', 'Fixed price paid to customers who bring minerals')}
     ${f('machineCost', 'Machine cost (K)', 'Fixed amount taken off every time a customer brings minerals')}
@@ -949,8 +883,8 @@ V.prices = () => {
     ${f('sellPrice', 'Selling price per gram (K)', 'Used for new sales')}
     ${f('milkPrice', 'Milk price per gram (K)', 'Used to show what lost milk is worth')}
   </div></div>
-  <div class="card" style="max-width:760px"><h2>Test data</h2><p class="note" style="margin:0 0 12px">Everything you type is saved in this browser only. This button puts the example data back.</p>
-  <button class="btn" id="resetBtn">Reset example data</button></div>`;
+  <div class="card" style="max-width:760px"><h2>Backup</h2><p class="note" style="margin:0 0 12px">Everything is saved in this browser only, on this device. Download a backup at the end of every day and keep it safe. Restore puts a backup back (for example on a new computer).</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="backupBtn">Download backup</button><button class="btn" id="restoreBtn">Restore from backup</button><input type="file" id="restoreFile" accept=".json,application/json" hidden><button class="btn" id="clearBtn">Clear everything</button></div></div>`;
 };
 V.machines = () => head('Machines', 'The 5 machines, the milk inside each one at the start, and what is inside now.') + sheetBlock('machines', 'Add machine');
 
@@ -1002,6 +936,17 @@ function onCellChange(e) {
 }
 document.addEventListener('input', e => { if (e.target.closest('table.sheet') || e.target.dataset.set || e.target.dataset.start) onCellChange(e); });
 document.addEventListener('change', onCellChange);
+document.addEventListener('change', e => {
+  if (e.target.id !== 'restoreFile' || !e.target.files[0]) return;
+  const file = e.target.files[0];
+  file.text().then(txt => {
+    const d = JSON.parse(txt);
+    if (!d || typeof d !== 'object' || !Array.isArray(d.machines) || !d.start) throw new Error('not a SomZam backup');
+    if (!confirm('Replace the data in this browser with the backup "' + file.name + '"?')) return;
+    S = JSON.parse(JSON.stringify(EXAMPLE)); Object.keys(S).forEach(k => { if (d[k] !== undefined) S[k] = d[k]; });
+    persist(); selMonth = null; route(); toast('Backup restored');
+  }).catch(() => toast('This file is not a SomZam backup')).finally(() => { e.target.value = ''; });
+});
 document.addEventListener('focusout', e => { if (e.target.closest('table.sheet')) renderLists(); });
 
 document.addEventListener('keydown', e => {
@@ -1032,7 +977,16 @@ document.addEventListener('click', e => {
   }
   const del = e.target.closest('[data-del]');
   if (del) { const key = del.closest('table.sheet').dataset.sheet; S[key].splice(+del.dataset.del, 1); persist(); mountSheet(key); toast('Row deleted'); return; }
-  if (e.target.id === 'resetBtn') { S = JSON.parse(JSON.stringify(EXAMPLE)); persist(); selMonth = null; route(); toast('Example data is back'); }
+  if (e.target.id === 'backupBtn') {
+    const url = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' }));
+    const a = document.createElement('a'); a.href = url; a.download = 'somzam-backup-' + todayStr() + '.json'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000); toast('Backup downloaded'); return;
+  }
+  if (e.target.id === 'restoreBtn') { document.getElementById('restoreFile').click(); return; }
+  if (e.target.id === 'clearBtn') {
+    if (!confirm('Delete ALL data in this browser and start empty? Download a backup first if you want to keep it.')) return;
+    S = JSON.parse(JSON.stringify(EXAMPLE)); S.start.date = todayStr(); persist(); selMonth = null; route(); toast('Everything cleared'); return;
+  }
 });
 document.getElementById('menuBtn').addEventListener('click', () => document.getElementById('app').classList.add('menu-open'));
 document.getElementById('scrim').addEventListener('click', () => document.getElementById('app').classList.remove('menu-open'));
