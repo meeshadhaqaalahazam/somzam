@@ -193,7 +193,7 @@ table.sheet { border-collapse: collapse; width: max-content; min-width: 100%; fo
   <aside class="side" aria-label="Main menu">
     <div class="brand">
       <div class="brand-mark"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l6-11 4 6 3-4 5 9z"/></svg></div>
-      <div><div class="brand-name">SomZam</div><div class="brand-sub">Gold office · Zambia</div></div>
+      <div><div class="brand-name">SomZam</div><div class="brand-sub">Mining office · Zambia</div></div>
     </div>
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">Test version. Changes are saved in this browser only.</div>
@@ -216,9 +216,12 @@ table.sheet { border-collapse: collapse; width: max-content; min-width: 100%; fo
 // ================= Icons & navigation =================
 const I = {
   home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  flag: '<path d="M5 21V4"/><path d="M5 4h12l-2.5 4L17 12H5"/>',
+  cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 10v4M18 10v4"/>',
   in: '<path d="M12 21V9M7 14l5-5 5 5"/><path d="M4 3h16"/>',
   out: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 21h16"/>',
   adv: '<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  drop: '<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
   stock: '<path d="M4 18l3-8h10l3 8z"/><path d="M8 10l2-5h4l2 5"/>',
   cog: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
   chev: '<path d="M9 6l6 6-6 6"/>'
@@ -226,43 +229,54 @@ const I = {
 const svg = (p, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 const NAV = [
   { id: 'dashboard', label: 'Overview', icon: 'home' },
+  { id: 'start', label: 'Starting point', icon: 'flag' },
+  { id: 'cash', label: 'Cash book', icon: 'cash' },
   { label: 'Money in', tag: 'in', icon: 'in', children: [
     { id: 'sales', label: 'Sales sheet' }, { id: 'report-week', label: 'Weekly report' }, { id: 'report-month', label: 'Monthly report' } ] },
   { label: 'Money out', tag: 'out', icon: 'out', children: [
-    { id: 'expenses', label: 'Daily expenses' }, { id: 'mercury', label: 'Mercury use' }, { id: 'salaries', label: 'Salaries' } ] },
+    { id: 'expenses', label: 'Daily expenses' }, { id: 'salaries', label: 'Salaries' } ] },
   { label: 'Customers', icon: 'adv', children: [
-    { id: 'intake', label: 'Gold brought in' }, { id: 'advances', label: 'Advances given' }, { id: 'balances', label: 'Customer balances' } ] },
-  { label: 'Gold stock', icon: 'stock', children: [ { id: 'stock', label: 'Stock now' } ] },
+    { id: 'intake', label: 'Minerals brought in' }, { id: 'advances', label: 'Advances given' }, { id: 'balances', label: 'Customer balances' } ] },
+  { label: 'Milk', icon: 'drop', children: [ { id: 'milk-machines', label: 'Milk per machine' }, { id: 'milk', label: 'Milk stock' } ] },
+  { label: 'Minerals stock', icon: 'stock', children: [ { id: 'stock', label: 'Stock now' } ] },
   { label: 'Setup', icon: 'cog', children: [ { id: 'prices', label: 'Prices and fixed costs' }, { id: 'machines', label: 'Machines' } ] }
 ];
 
 // ================= Example data (Zambian kwacha, grams) =================
 const EXAMPLE = {
-  settings: { buyPrice: 2900, sellPrice: 3250, transport: 150, mercuryPrice: 3.2, opening: 5 },
+  settings: { buyPrice: 1400, machineCost: 750, transport: 150, sellPrice: 1650, milkPrice: 3.2 },
+  start: { date: '2026-10-01', cash: 60000, milk: 1500, minerals: 5 },
+  startAdv: [
+    { customer: 'Mwila & Sons', amount: 2000, note: 'From the old book' },
+    { customer: 'Bwalya Brothers', amount: 1500, note: 'From the old book' }
+  ],
   machines: [
-    { no: 'M1', name: 'Ball mill 1', cost: 200 },
-    { no: 'M2', name: 'Ball mill 2', cost: 250 },
-    { no: 'M3', name: 'Sluice + concentrator', cost: 180 }
+    { no: 'M1', name: 'Ball mill 1', startMilk: 120 },
+    { no: 'M2', name: 'Ball mill 2', startMilk: 80 },
+    { no: 'M3', name: 'Sluice + concentrator', startMilk: 60 },
+    { no: 'M4', name: 'Ball mill 3', startMilk: 0 },
+    { no: 'M5', name: 'Concentrator 2', startMilk: 40 }
   ],
   advances: [
     { date: '2026-10-03', customer: 'Chanda Mining Group', amount: 5000, note: 'Cash' },
     { date: '2026-10-12', customer: 'Mwila & Sons', amount: 3000, note: 'Fuel money' },
-    { date: '2026-10-25', customer: 'Kabwe Gold Co-op', amount: 8000, note: 'Cash' },
+    { date: '2026-10-25', customer: 'Kabwe Mining Co-op', amount: 8000, note: 'Cash' },
     { date: '2026-11-04', customer: 'Chanda Mining Group', amount: 4000, note: 'Cash' },
-    { date: '2026-11-10', customer: 'Bwalya Brothers', amount: 2500, note: 'Tools' }
+    { date: '2026-11-10', customer: 'Bwalya Brothers', amount: 2500, note: 'Tools' },
+    { date: '2026-11-15', customer: 'Mwila & Sons', amount: 3000, note: 'Cash' }
   ],
   intake: [
-    { date: '2026-10-08', customer: 'Chanda Mining Group', grams: 12.4, price: 2850, machine: 'M1', transport: 150 },
-    { date: '2026-10-18', customer: 'Mwila & Sons', grams: 6.2, price: 2850, machine: 'M2', transport: 150 },
-    { date: '2026-10-30', customer: 'Kabwe Gold Co-op', grams: 2.1, price: 2850, machine: 'M3', transport: 150 },
-    { date: '2026-11-06', customer: 'Chanda Mining Group', grams: 9.8, price: 2900, machine: 'M1', transport: 150 },
-    { date: '2026-11-12', customer: 'Kabwe Gold Co-op', grams: 7.5, price: 2900, machine: 'M2', transport: 150 },
-    { date: '2026-11-14', customer: 'Bwalya Brothers', grams: 4.3, price: 2900, machine: 'M3', transport: 150 }
+    { date: '2026-10-08', customer: 'Chanda Mining Group', grams: 12.4, price: 1400, transport: 150, mc: 750, priv: '' },
+    { date: '2026-10-18', customer: 'Mwila & Sons', grams: 6.2, price: 1400, transport: 150, mc: 750, priv: 500 },
+    { date: '2026-10-30', customer: 'Kabwe Mining Co-op', grams: 2.1, price: 1400, transport: 150, mc: 750, priv: '' },
+    { date: '2026-11-06', customer: 'Chanda Mining Group', grams: 9.8, price: 1400, transport: 150, mc: 750, priv: 1000 },
+    { date: '2026-11-12', customer: 'Kabwe Mining Co-op', grams: 7.5, price: 1400, transport: 150, mc: 750, priv: '' },
+    { date: '2026-11-14', customer: 'Bwalya Brothers', grams: 4.3, price: 1400, transport: 150, mc: 750, priv: '' }
   ],
   sales: [
-    { date: '2026-10-21', buyer: 'Lusaka Bullion Traders', grams: 15, price: 3150, status: 'Paid' },
-    { date: '2026-11-03', buyer: 'Copperbelt Refiners', grams: 8, price: 3200, status: 'Paid' },
-    { date: '2026-11-13', buyer: 'Lusaka Bullion Traders', grams: 10, price: 3250, status: 'Not paid yet' }
+    { date: '2026-10-21', buyer: 'Lusaka Mineral Traders', grams: 15, price: 1600, status: 'Paid' },
+    { date: '2026-11-03', buyer: 'Copperbelt Refiners', grams: 8, price: 1650, status: 'Paid' },
+    { date: '2026-11-13', buyer: 'Lusaka Mineral Traders', grams: 10, price: 1650, status: 'Not paid yet' }
   ],
   expenses: [
     { date: '2026-10-06', category: 'Fuel', desc: 'Diesel generator 60 L', by: 'Peter Mulenga', amount: 1650 },
@@ -276,29 +290,40 @@ const EXAMPLE = {
     { date: '2026-11-13', category: 'Food', desc: 'Lunch for 17 workers', by: 'Grace Banda', amount: 510 },
     { date: '2026-11-14', category: 'Fuel', desc: 'Petrol water pump 20 L', by: 'Peter Mulenga', amount: 560 }
   ],
-  mercury: [
-    { date: '2026-10-09', machine: 'M1', grams: 110, use: 'Amalgamation' },
-    { date: '2026-10-19', machine: 'M2', grams: 70, use: 'Amalgamation' },
-    { date: '2026-10-31', machine: 'M3', grams: 35, use: 'Re-processing tailings' },
-    { date: '2026-11-03', machine: 'M1', grams: 120, use: 'Amalgamation' },
-    { date: '2026-11-07', machine: 'M1', grams: 95, use: 'Amalgamation' },
-    { date: '2026-11-10', machine: 'M2', grams: 80, use: 'Amalgamation' },
-    { date: '2026-11-12', machine: 'M3', grams: 40, use: 'Re-processing tailings' },
-    { date: '2026-11-14', machine: 'M2', grams: 65, use: 'Amalgamation' }
+  milkBought: [
+    { date: '2026-10-05', from: 'Lusaka supplier', grams: 1000, amount: 3200 },
+    { date: '2026-11-08', from: 'Lusaka supplier', grams: 800, amount: 2600 }
+  ],
+  machineMilk: [
+    { date: '2026-11-12', machine: 'M1', added: 100, used: 150, left: 65 },
+    { date: '2026-11-12', machine: 'M2', added: 80, used: 120, left: 38 },
+    { date: '2026-11-12', machine: 'M3', added: 50, used: 90, left: 20 },
+    { date: '2026-11-12', machine: 'M4', added: 120, used: 100, left: 18 },
+    { date: '2026-11-12', machine: 'M5', added: 60, used: 80, left: 20 },
+    { date: '2026-11-13', machine: 'M1', added: 120, used: 140, left: 42 },
+    { date: '2026-11-13', machine: 'M2', added: 100, used: 110, left: 25 },
+    { date: '2026-11-13', machine: 'M3', added: 70, used: 75, left: 15 },
+    { date: '2026-11-13', machine: 'M4', added: 90, used: 95, left: 10 },
+    { date: '2026-11-13', machine: 'M5', added: 80, used: 85, left: 14 },
+    { date: '2026-11-14', machine: 'M1', added: 110, used: 130, left: '' },
+    { date: '2026-11-14', machine: 'M2', added: 90, used: 100, left: 15 },
+    { date: '2026-11-14', machine: 'M3', added: 60, used: 70, left: 5 },
+    { date: '2026-11-14', machine: 'M4', added: 100, used: 95, left: 12 },
+    { date: '2026-11-14', machine: 'M5', added: 70, used: 72, left: 12 }
   ],
   salaries: [
-    { name: 'Peter Mulenga', job: 'Site supervisor', salary: 6500, daysOff: 1, status: 'Not paid yet' },
-    { name: 'Esther Zulu', job: 'Cashier', salary: 4500, daysOff: 0, status: 'Not paid yet' },
-    { name: 'Joseph Phiri', job: 'Machine operator', salary: 3800, daysOff: 2, status: 'Not paid yet' },
-    { name: 'Daniel Tembo', job: 'Machine operator', salary: 3800, daysOff: 0, status: 'Not paid yet' },
-    { name: 'Moses Lungu', job: 'Washer', salary: 2800, daysOff: 1, status: 'Not paid yet' },
-    { name: 'Ruth Mwale', job: 'Washer', salary: 2800, daysOff: 0, status: 'Not paid yet' },
-    { name: 'Grace Banda', job: 'Cook', salary: 2500, daysOff: 0, status: 'Not paid yet' },
-    { name: 'Kelvin Sakala', job: 'Security', salary: 2600, daysOff: 3, status: 'Not paid yet' }
+    { name: 'Peter Mulenga', job: 'Site supervisor', salary: 6500, daysOff: 1, status: 'Not paid yet', paidOn: '' },
+    { name: 'Esther Zulu', job: 'Cashier', salary: 4500, daysOff: 0, status: 'Not paid yet', paidOn: '' },
+    { name: 'Joseph Phiri', job: 'Machine operator', salary: 3800, daysOff: 2, status: 'Not paid yet', paidOn: '' },
+    { name: 'Daniel Tembo', job: 'Machine operator', salary: 3800, daysOff: 0, status: 'Not paid yet', paidOn: '' },
+    { name: 'Moses Lungu', job: 'Washer', salary: 2800, daysOff: 1, status: 'Not paid yet', paidOn: '' },
+    { name: 'Ruth Mwale', job: 'Washer', salary: 2800, daysOff: 0, status: 'Not paid yet', paidOn: '' },
+    { name: 'Grace Banda', job: 'Cook', salary: 2500, daysOff: 0, status: 'Not paid yet', paidOn: '' },
+    { name: 'Kelvin Sakala', job: 'Security', salary: 2600, daysOff: 3, status: 'Not paid yet', paidOn: '' }
   ]
 };
 
-const STORE_KEY = 'somzam-v2';
+const STORE_KEY = 'somzam-v3';
 let S;
 function load() {
   let saved = null;
@@ -316,6 +341,7 @@ const K0 = n => 'K ' + Math.round(n).toLocaleString('en-US');
 const G = n => Number(n).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + ' g';
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 const norm = s => String(s || '').trim().toLowerCase();
+const isBlank = v => String(v ?? '').trim() === '';
 const dshort = s => s ? new Date(s + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }) : '';
 const monthName = ym => new Date(ym + '-01T00:00:00Z').toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 const monday = s => { const d = new Date(s + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
@@ -326,33 +352,57 @@ const chip = (t, k) => `<span class="chip ${k}">${esc(t)}</span>`;
 const dataTable = (cols, rows, foot) => `<div class="table-wrap"><table class="data"><thead><tr>${cols.map(c => `<th class="${c.num ? 'num' : ''}">${c.h}</th>`).join('')}</tr></thead>
   <tbody>${rows.map(r => `<tr>${cols.map(c => `<td class="${c.num ? 'num' : ''}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</tbody>
   ${foot ? `<tfoot><tr>${foot.map((f, i) => `<td class="${cols[i].num ? 'num' : ''}">${f}</td>`).join('')}</tr></tfoot>` : ''}</table></div>`;
-const machineCost = no => num((S.machines.find(m => norm(m.no) === norm(no)) || {}).cost);
+const machineName = no => (S.machines.find(m => norm(m.no) === norm(no)) || {}).name || '';
+const lostText = v => v > 0 ? G(v) : v < 0 ? '+' + G(-v) + ' extra' : '0 g';
 
 // ================= Calculations =================
-// Gold brought in: value = grams x price; minus advance still open for that customer (from earlier advances), transport and machine cost.
+// Minerals brought in: value = grams x 1400; minus open advance, transport, machine cost (750) and private payment.
+// If the result is below zero, the rest stays as an advance the customer still owes.
 function deriveIntake() {
   const events = [];
+  S.startAdv.forEach(a => events.push({ date: '', kind: 0, a }));
   S.advances.forEach(a => events.push({ date: a.date || '', kind: 0, a }));
   S.intake.forEach((r, i) => events.push({ date: r.date || '', kind: 1, r, i }));
   events.sort((x, y) => x.date.localeCompare(y.date) || x.kind - y.kind);
   const bal = {}, out = [];
   events.forEach(e => {
-    if (e.kind === 0) { const c = norm(e.a.customer); bal[c] = (bal[c] || 0) + num(e.a.amount); return; }
+    if (e.kind === 0) { const c = norm(e.a.customer); if (c) bal[c] = (bal[c] || 0) + num(e.a.amount); return; }
     const c = norm(e.r.customer);
     const value = num(e.r.grams) * num(e.r.price);
     const adv = bal[c] || 0;
-    const tr = num(e.r.transport), mc = machineCost(e.r.machine);
-    const pay = value - adv - tr - mc;
+    const tr = num(e.r.transport), mc = num(e.r.mc), pv = num(e.r.priv);
+    const pay = value - adv - tr - mc - pv;
     bal[c] = pay < 0 ? -pay : 0;
-    out[e.i] = { value, adv, mc, pay };
+    out[e.i] = { value, adv, pay, cashOut: Math.max(0, pay) + tr + pv };
   });
   return { rows: out, bal };
 }
+
+// Milk per machine: carried from the day before + added from stock − used = balance. Lost = balance − counted left.
+// What was counted (or the balance, if nobody counted) carries over to the next day.
+function deriveMachineMilk() {
+  const carry = {}, lost = {};
+  S.machines.forEach(m => { carry[norm(m.no)] = num(m.startMilk); lost[norm(m.no)] = 0; });
+  const idx = S.machineMilk.map((r, i) => i).sort((a, b) => String(S.machineMilk[a].date || '').localeCompare(String(S.machineMilk[b].date || '')) || a - b);
+  const rows = [];
+  idx.forEach(i => {
+    const r = S.machineMilk[i], k = norm(r.machine);
+    const from = carry[k] || 0, added = num(r.added), used = num(r.used);
+    const bal = from + added - used;
+    const counted = isBlank(r.left) ? null : num(r.left);
+    const l = counted === null ? null : bal - counted;
+    carry[k] = counted === null ? bal : counted;
+    lost[k] = (lost[k] || 0) + (l || 0);
+    rows[i] = { name: machineName(r.machine), from, inn: from + added, bal, lost: l };
+  });
+  return { rows, now: carry, lost };
+}
+
 const deriveRows = {
   intake: () => deriveIntake().rows,
   sales: () => S.sales.map(r => ({ total: num(r.grams) * num(r.price) })),
-  mercury: () => S.mercury.map(r => ({ cost: num(r.grams) * num(S.settings.mercuryPrice), name: (S.machines.find(m => norm(m.no) === norm(r.machine)) || {}).name || '' })),
-  machines: () => S.machines.map(m => ({ uses: S.intake.filter(r => norm(r.machine) === norm(m.no)).length + S.mercury.filter(r => norm(r.machine) === norm(m.no)).length }))
+  machineMilk: () => deriveMachineMilk().rows,
+  machines: () => { const d = deriveMachineMilk(); return S.machines.map(m => ({ now: d.now[norm(m.no)] || 0, lost: d.lost[norm(m.no)] || 0 })); }
 };
 
 function stockMoves() {
@@ -360,7 +410,31 @@ function stockMoves() {
   S.intake.forEach(r => { if (num(r.grams)) mv.push({ date: r.date, who: r.customer, inn: num(r.grams), out: 0, what: 'Brought in by customer' }); });
   S.sales.forEach(r => { if (num(r.grams)) mv.push({ date: r.date, who: r.buyer, inn: 0, out: num(r.grams), what: 'Sold' }); });
   mv.sort((a, b) => String(a.date).localeCompare(String(b.date)));
-  let bal = num(S.settings.opening);
+  let bal = num(S.start.minerals);
+  mv.forEach(m => { bal += m.inn - m.out; m.bal = bal; });
+  return { moves: mv, now: bal };
+}
+
+function milkMoves() {
+  const mv = [];
+  S.milkBought.forEach(r => { if (num(r.grams)) mv.push({ date: r.date, who: r.from, inn: num(r.grams), out: 0, what: 'Bought' }); });
+  S.machineMilk.forEach(r => { if (num(r.added)) mv.push({ date: r.date, who: `${r.machine} · ${machineName(r.machine)}`, inn: 0, out: num(r.added), what: 'Given to machine' }); });
+  mv.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  let bal = num(S.start.milk);
+  mv.forEach(m => { bal += m.inn - m.out; m.bal = bal; });
+  return { moves: mv, now: bal };
+}
+
+function cashMoves() {
+  const d = deriveIntake().rows, mv = [];
+  S.sales.forEach(r => { const v = num(r.grams) * num(r.price); if (r.status === 'Paid' && v) mv.push({ date: r.date, what: 'Sale paid', who: r.buyer, inn: v, out: 0 }); });
+  S.intake.forEach((r, i) => { const x = d[i]; if (x && x.cashOut) mv.push({ date: r.date, what: 'Minerals bought', who: r.customer, inn: 0, out: x.cashOut }); });
+  S.advances.forEach(r => { if (num(r.amount)) mv.push({ date: r.date, what: 'Advance given', who: r.customer, inn: 0, out: num(r.amount) }); });
+  S.expenses.forEach(r => { if (num(r.amount)) mv.push({ date: r.date, what: r.category || 'Expense', who: r.desc, inn: 0, out: num(r.amount) }); });
+  S.milkBought.forEach(r => { if (num(r.amount)) mv.push({ date: r.date, what: 'Milk bought', who: r.from, inn: 0, out: num(r.amount) }); });
+  S.salaries.forEach(r => { if (r.status === 'Paid' && num(r.salary)) mv.push({ date: r.paidOn || todayStr(), what: 'Salary paid', who: r.name, inn: 0, out: num(r.salary) }); });
+  mv.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  let bal = num(S.start.cash);
   mv.forEach(m => { bal += m.inn - m.out; m.bal = bal; });
   return { moves: mv, now: bal };
 }
@@ -369,15 +443,15 @@ function stockMoves() {
 function money(inPeriod, withSalaries) {
   const intake = deriveIntake().rows;
   const sales = sum(S.sales.filter(r => inPeriod(r.date)), r => num(r.grams) * num(r.price));
-  const gold = sum(S.intake.map((r, i) => ({ r, d: intake[i] })).filter(x => inPeriod(x.r.date)), x => Math.max(0, x.d ? x.d.pay : 0));
+  const minerals = sum(S.intake.map((r, i) => ({ r, d: intake[i] })).filter(x => inPeriod(x.r.date)), x => x.d ? x.d.cashOut : 0);
   const advances = sum(S.advances.filter(r => inPeriod(r.date)), r => num(r.amount));
   const expenses = sum(S.expenses.filter(r => inPeriod(r.date)), r => num(r.amount));
-  const mercury = sum(S.mercury.filter(r => inPeriod(r.date)), r => num(r.grams) * num(S.settings.mercuryPrice));
+  const milk = sum(S.milkBought.filter(r => inPeriod(r.date)), r => num(r.amount));
   const salaries = withSalaries ? sum(S.salaries, r => num(r.salary)) : 0;
-  const out = gold + advances + expenses + mercury + salaries;
-  return { sales, gold, advances, expenses, mercury, salaries, out, net: sales - out };
+  const out = minerals + advances + expenses + milk + salaries;
+  return { sales, minerals, advances, expenses, milk, salaries, out, net: sales - out };
 }
-const allMonths = () => [...new Set([...S.sales, ...S.intake, ...S.advances, ...S.expenses, ...S.mercury].map(r => String(r.date || '').slice(0, 7)).filter(Boolean))].sort();
+const allMonths = () => [...new Set([...S.sales, ...S.intake, ...S.advances, ...S.expenses, ...S.milkBought, ...S.machineMilk].map(r => String(r.date || '').slice(0, 7)).filter(Boolean))].sort();
 
 // ================= Spreadsheet engine =================
 const machineNos = () => S.machines.map(m => m.no).filter(Boolean);
@@ -386,7 +460,7 @@ const SHEETS = {
     cols: [
       { k: 'date', h: 'Date', t: 'date', w: 150 },
       { k: 'buyer', h: 'Sold to (company)', t: 'text', list: 'l-buyers', w: 230 },
-      { k: 'grams', h: 'Gold (g)', t: 'num', w: 100, total: 'g' },
+      { k: 'grams', h: 'Minerals (g)', t: 'num', w: 110, total: 'g' },
       { k: 'price', h: 'Price per g (K)', t: 'num', w: 130 },
       { k: 'total', h: 'Total (K)', t: 'calc', f: 'K', strong: 1, total: 'K', w: 150 },
       { k: 'status', h: 'Paid?', t: 'select', opts: ['Paid', 'Not paid yet'], w: 140 }
@@ -403,17 +477,31 @@ const SHEETS = {
     ],
     blank: () => ({ date: todayStr(), category: 'Food', desc: '', by: '', amount: '' })
   },
-  mercury: {
+  machineMilk: {
+    cols: [
+      { k: 'date', h: 'Date', t: 'date', w: 145 },
+      { k: 'machine', h: 'Machine', t: 'select', opts: machineNos, w: 95 },
+      { k: 'name', h: 'Name', t: 'calc', f: 'text', w: 170 },
+      { k: 'from', h: 'From day before', t: 'calc', f: 'g', w: 130 },
+      { k: 'added', h: '+ Added from stock', t: 'num', w: 145, total: 'g' },
+      { k: 'inn', h: '= Milk in', t: 'calc', f: 'g', w: 110 },
+      { k: 'used', h: '− Used today', t: 'num', w: 120, total: 'g' },
+      { k: 'bal', h: '= Balance', t: 'calc', f: 'g', strong: 1, w: 115 },
+      { k: 'left', h: 'Counted left', t: 'num', w: 115 },
+      { k: 'lost', h: 'Lost', t: 'calc', f: 'lost', total: 'lost', w: 120 }
+    ],
+    blank: () => ({ date: todayStr(), machine: machineNos()[0] || '', added: '', used: '', left: '' }),
+    after: () => renderMilkSummary()
+  },
+  milkBought: {
     cols: [
       { k: 'date', h: 'Date', t: 'date', w: 150 },
-      { k: 'machine', h: 'Machine no.', t: 'select', opts: machineNos, w: 120 },
-      { k: 'name', h: 'Machine', t: 'calc', f: 'text', w: 190 },
-      { k: 'grams', h: 'Mercury used (g)', t: 'num', w: 140, total: 'g' },
-      { k: 'use', h: 'Used for', t: 'select', opts: ['Amalgamation', 'Re-processing tailings', 'Cleaning', 'Other'], w: 190 },
-      { k: 'cost', h: 'Cost (K)', t: 'calc', f: 'K', strong: 1, total: 'K', w: 130 }
+      { k: 'from', h: 'Bought from', t: 'text', list: 'l-milkfrom', w: 230 },
+      { k: 'grams', h: 'Milk (g)', t: 'num', w: 120, total: 'g' },
+      { k: 'amount', h: 'Paid (K)', t: 'num', w: 130, total: 'K' }
     ],
-    blank: () => ({ date: todayStr(), machine: machineNos()[0] || '', grams: '', use: 'Amalgamation' }),
-    after: () => renderMercurySummary()
+    blank: () => ({ date: todayStr(), from: '', grams: '', amount: '' }),
+    after: () => renderMilkStock()
   },
   salaries: {
     cols: [
@@ -421,9 +509,10 @@ const SHEETS = {
       { k: 'job', h: 'Job', t: 'text', w: 170 },
       { k: 'salary', h: 'Monthly salary (K)', t: 'num', w: 150, total: 'K' },
       { k: 'daysOff', h: 'Days off this month', t: 'num', w: 150, total: 'n' },
-      { k: 'status', h: 'Paid?', t: 'select', opts: ['Paid', 'Not paid yet'], w: 140 }
+      { k: 'status', h: 'Paid?', t: 'select', opts: ['Paid', 'Not paid yet'], w: 140 },
+      { k: 'paidOn', h: 'Paid on', t: 'date', w: 150 }
     ],
-    blank: () => ({ name: '', job: '', salary: '', daysOff: 0, status: 'Not paid yet' })
+    blank: () => ({ name: '', job: '', salary: '', daysOff: 0, status: 'Not paid yet', paidOn: '' })
   },
   advances: {
     cols: [
@@ -434,29 +523,40 @@ const SHEETS = {
     ],
     blank: () => ({ date: todayStr(), customer: '', amount: '', note: 'Cash' })
   },
+  startAdv: {
+    cols: [
+      { k: 'customer', h: 'Customer (company)', t: 'text', list: 'l-customers', w: 240 },
+      { k: 'amount', h: 'Still owes us (K)', t: 'num', w: 150, total: 'K' },
+      { k: 'note', h: 'Note', t: 'text', w: 220 }
+    ],
+    blank: () => ({ customer: '', amount: '', note: '' }),
+    after: () => renderStartNow()
+  },
   intake: {
     cols: [
-      { k: 'date', h: 'Date', t: 'date', w: 150 },
-      { k: 'customer', h: 'Customer (company)', t: 'text', list: 'l-customers', w: 210 },
-      { k: 'grams', h: 'Gold (g)', t: 'num', w: 95, total: 'g' },
-      { k: 'price', h: 'Price per g (K)', t: 'num', w: 120 },
-      { k: 'value', h: 'Gold value', t: 'calc', f: 'K', total: 'K', w: 135 },
-      { k: 'adv', h: '− Advance before', t: 'calc', f: 'K', w: 140 },
-      { k: 'transport', h: '− Transport', t: 'num', w: 110, total: 'K' },
-      { k: 'machine', h: 'Machine no.', t: 'select', opts: machineNos, w: 105 },
-      { k: 'mc', h: '− Machine cost', t: 'calc', f: 'K', total: 'K', w: 130 },
+      { k: 'date', h: 'Date', t: 'date', w: 145 },
+      { k: 'customer', h: 'Customer (company)', t: 'text', list: 'l-customers', w: 200 },
+      { k: 'grams', h: 'Minerals (g)', t: 'num', w: 105, total: 'g' },
+      { k: 'price', h: 'Price per g (K)', t: 'num', w: 115 },
+      { k: 'value', h: 'Minerals value', t: 'calc', f: 'K', total: 'K', w: 135 },
+      { k: 'adv', h: '− Advance before', t: 'calc', f: 'K', w: 135 },
+      { k: 'transport', h: '− Transport', t: 'num', w: 105, total: 'K' },
+      { k: 'mc', h: '− Machine cost', t: 'num', w: 120, total: 'K' },
+      { k: 'priv', h: '− Private payment', t: 'num', w: 135, total: 'K' },
       { k: 'pay', h: 'Pay to customer', t: 'calc', f: 'pay', total: 'pay', w: 170 }
     ],
-    blank: () => ({ date: todayStr(), customer: '', grams: '', price: S.settings.buyPrice, machine: machineNos()[0] || '', transport: S.settings.transport })
+    blank: () => ({ date: todayStr(), customer: '', grams: '', price: S.settings.buyPrice, transport: S.settings.transport, mc: S.settings.machineCost, priv: '' })
   },
   machines: {
     cols: [
-      { k: 'no', h: 'Machine no.', t: 'text', w: 120 },
-      { k: 'name', h: 'Name', t: 'text', w: 220 },
-      { k: 'cost', h: 'Fixed cost per use (K)', t: 'num', w: 180 },
-      { k: 'uses', h: 'Times used', t: 'calc', f: 'n', w: 110 }
+      { k: 'no', h: 'Machine no.', t: 'text', w: 110 },
+      { k: 'name', h: 'Name', t: 'text', w: 210 },
+      { k: 'startMilk', h: 'Milk inside at start (g)', t: 'num', w: 180, total: 'g' },
+      { k: 'now', h: 'Milk inside now', t: 'calc', f: 'g', strong: 1, total: 'g', w: 140 },
+      { k: 'lost', h: 'Milk lost so far', t: 'calc', f: 'lost', total: 'lost', w: 140 }
     ],
-    blank: () => ({ no: 'M' + (S.machines.length + 1), name: '', cost: '' })
+    blank: () => ({ no: 'M' + (S.machines.length + 1), name: '', startMilk: '' }),
+    after: () => renderStartNow()
   }
 };
 const LETTERS = 'ABCDEFGHIJKLMNOP';
@@ -467,6 +567,7 @@ function fmtCell(f, v) {
   if (f === 'g') return G(v);
   if (f === 'n') return String(Math.round(v * 100) / 100);
   if (f === 'pay') return v < 0 ? 'Still owes ' + K(-v) : K(v);
+  if (f === 'lost') return lostText(v);
   return esc(v);
 }
 
@@ -494,22 +595,22 @@ function sheetHtml(key) {
 }
 
 function refreshSheet(key) {
-  const table = document.querySelector(`table.sheet[data-sheet="${key}"]`);
-  if (!table) return;
   const sh = SHEETS[key];
-  const D = deriveRows[key] ? deriveRows[key]() : [];
-  table.querySelectorAll('[data-calc]').forEach(td => {
-    const c = sh.cols.find(x => x.k === td.dataset.calc);
-    const v = (D[+td.dataset.r] || {})[c.k];
-    td.textContent = fmtCell(c.f, v).replace(/&amp;/g, '&');
-    td.classList.toggle('owe', c.f === 'pay' && v < 0);
-  });
-  table.querySelectorAll('[data-total]').forEach(td => {
-    const k = td.dataset.total; if (!k) return;
-    const c = sh.cols.find(x => x.k === k);
-    const vals = S[key].map((row, r) => c.t === 'calc' ? ((D[r] || {})[k] || 0) : num(row[k]));
-    if (c.total === 'pay') td.textContent = 'Paid ' + K(sum(vals, v => Math.max(0, v)));
-    else td.textContent = fmtCell(c.total, sum(vals, v => v));
+  document.querySelectorAll(`table.sheet[data-sheet="${key}"]`).forEach(table => {
+    const D = deriveRows[key] ? deriveRows[key]() : [];
+    table.querySelectorAll('[data-calc]').forEach(td => {
+      const c = sh.cols.find(x => x.k === td.dataset.calc);
+      const v = (D[+td.dataset.r] || {})[c.k];
+      td.textContent = fmtCell(c.f, v).replace(/&amp;/g, '&');
+      td.classList.toggle('owe', (c.f === 'pay' && v < 0) || (c.f === 'lost' && v > 0));
+    });
+    table.querySelectorAll('[data-total]').forEach(td => {
+      const k = td.dataset.total; if (!k) return;
+      const c = sh.cols.find(x => x.k === k);
+      const vals = S[key].map((row, r) => c.t === 'calc' ? ((D[r] || {})[k] || 0) : num(row[k]));
+      if (c.total === 'pay') td.textContent = 'Paid ' + K(sum(vals, v => Math.max(0, v)));
+      else td.textContent = fmtCell(c.total, sum(vals, v => v));
+    });
   });
   if (sh.after) sh.after();
 }
@@ -529,8 +630,8 @@ function addRow(key, focusKey) {
   mountSheet(key, { r: S[key].length - 1, k: focusKey || SHEETS[key].cols.find(c => c.t !== 'calc').k });
 }
 
-const sheetBlock = (key, addLabel) => `
-  <div class="sheet-tools"><button class="btn primary" data-add="${key}">+ ${addLabel}</button>
+const sheetBlock = (key, addLabel, extra = '') => `
+  <div class="sheet-tools"><button class="btn primary" data-add="${key}">+ ${addLabel}</button>${extra}
   <span class="hint">Type like in Excel. Enter goes to the next row. Grey columns are calculated.</span></div>
   <div id="sheet-${key}"></div>`;
 
@@ -538,8 +639,9 @@ function renderLists() {
   const uniq = arr => [...new Set(arr.map(x => String(x || '').trim()).filter(Boolean))];
   const dl = (id, arr) => `<datalist id="${id}">${uniq(arr).map(v => `<option value="${esc(v)}"></option>`).join('')}</datalist>`;
   document.getElementById('lists').innerHTML =
-    dl('l-customers', [...S.advances.map(r => r.customer), ...S.intake.map(r => r.customer)]) +
+    dl('l-customers', [...S.startAdv.map(r => r.customer), ...S.advances.map(r => r.customer), ...S.intake.map(r => r.customer)]) +
     dl('l-buyers', S.sales.map(r => r.buyer)) +
+    dl('l-milkfrom', S.milkBought.map(r => r.from)) +
     dl('l-staff', S.salaries.map(r => r.name));
 }
 
@@ -570,38 +672,52 @@ function barChart(items, series) {
 // ================= Views =================
 const V = {};
 let selMonth = null;
+const kpiLink = (href, label, value, note, cls = '') => `<a class="card kpi" href="${href}" style="text-decoration:none;color:inherit"><span class="label">${label}</span><span class="value ${cls}">${value}</span>${note ? `<span class="note">${note}</span>` : ''}</a>`;
+
+function nowKpis() {
+  const cash = cashMoves().now, st = stockMoves().now, milk = milkMoves().now;
+  const owe = sum(Object.values(deriveIntake().bal), v => v);
+  const mm = deriveMachineMilk(), inMachines = sum(Object.values(mm.now), v => v);
+  return `<div class="grid g-kpi">
+    ${kpiLink('#cash', 'Cash in hand now', K0(cash), 'After every payment and sale', cash < 0 ? 'c-out' : '')}
+    ${kpiLink('#stock', 'Minerals in stock', G(st), 'After every sale')}
+    ${kpiLink('#milk', 'Milk in stock', G(milk), `Plus ${G(inMachines)} inside the machines`)}
+    ${kpiLink('#balances', 'Customers still owe us', K0(owe), 'Open advances', 'c-out')}
+  </div>`;
+}
 
 V.dashboard = () => {
   const months = allMonths();
   const cur = todayStr().slice(0, 7);
   if (!selMonth) selMonth = months.includes(cur) ? cur : months[months.length - 1] || cur;
-  const m = money(d => String(d || '').startsWith(selMonth), true);
-  const salesRows = S.sales.filter(r => String(r.date || '').startsWith(selMonth));
+  const inMonth = d => String(d || '').startsWith(selMonth);
+  const m = money(inMonth, true);
+  const salesRows = S.sales.filter(r => inMonth(r.date));
   const paid = sum(salesRows.filter(r => r.status === 'Paid'), r => num(r.grams) * num(r.price));
   const unpaid = m.sales - paid;
-  const st = stockMoves();
-  const owe = sum(Object.values(deriveIntake().bal), v => v);
-  const merc = S.mercury.filter(r => String(r.date || '').startsWith(selMonth));
-  const byMachine = {}; merc.forEach(r => byMachine[r.machine] = (byMachine[r.machine] || 0) + num(r.grams));
-  const top = Object.entries(byMachine).sort((a, b) => b[1] - a[1])[0];
-  const outLines = [['Paid to customers for gold', m.gold, '#intake'], ['Advances given', m.advances, '#advances'], ['Daily expenses', m.expenses, '#expenses'], ['Mercury', m.mercury, '#mercury'], ['Salaries', m.salaries, '#salaries']];
+  const mm = deriveMachineMilk();
+  const lostMonth = sum(S.machineMilk.map((r, i) => ({ r, d: mm.rows[i] })).filter(x => inMonth(x.r.date)), x => (x.d && x.d.lost) || 0);
+  const usedMonth = sum(S.machineMilk.filter(r => inMonth(r.date)), r => num(r.used));
+  const outLines = [['Paid for minerals (incl. transport, private)', m.minerals, '#intake'], ['Advances given', m.advances, '#advances'], ['Daily expenses', m.expenses, '#expenses'], ['Milk bought', m.milk, '#milk'], ['Salaries', m.salaries, '#salaries']];
   const maxOut = Math.max(1, ...outLines.map(l => l[1]));
-  // last 8 weeks
   const weeks = [];
   const lastDate = [...S.sales, ...S.expenses, ...S.intake].map(r => r.date).filter(Boolean).sort().pop() || todayStr();
   let w = monday(lastDate);
   for (let i = 0; i < 8; i++) { weeks.unshift(w); const d = new Date(w + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - 7); w = d.toISOString().slice(0, 10); }
-  const wk = weeks.map(ws => { const mm = money(d => d && monday(d) === ws, false); return { label: dshort(ws), inn: mm.sales, out: mm.out }; });
+  const wk = weeks.map(ws => { const x = money(d => d && monday(d) === ws, false); return { label: dshort(ws), inn: x.sales, out: x.out }; });
 
-  return head('Overview', 'What came in and what went out. Click a block to see the details.',
+  return head('Overview', 'What we have now, and what came in and went out this month. Click a block to see the details.',
     `<label class="note" for="monthSel">Month</label><select class="btn" id="monthSel">${months.map(x => `<option value="${x}"${x === selMonth ? ' selected' : ''}>${monthName(x)}</option>`).join('')}</select>`) + `
+  <h2 style="margin:0 0 10px;font-size:15px">Right now</h2>
+  ${nowKpis()}
+  <h2 style="margin:22px 0 10px;font-size:15px">${monthName(selMonth)}</h2>
   <div class="grid g-2e">
     <a class="card big in" href="#sales">
       <div class="top"><span class="ic">${svg(I.in)}</span><span class="title">Money in</span><span class="open">Open sales →</span></div>
       <div class="amount">${K0(m.sales)}</div>
       <div class="lines">
-        <div class="line"><span>Gold sales, paid</span><span class="v">${K0(paid)}</span><div class="track"><div class="fill in" style="width:${m.sales ? paid / m.sales * 100 : 0}%"></div></div></div>
-        <div class="line"><span>Gold sales, not paid yet</span><span class="v">${K0(unpaid)}</span><div class="track"><div class="fill" style="width:${m.sales ? unpaid / m.sales * 100 : 0}%"></div></div></div>
+        <div class="line"><span>Mineral sales, paid</span><span class="v">${K0(paid)}</span><div class="track"><div class="fill in" style="width:${m.sales ? paid / m.sales * 100 : 0}%"></div></div></div>
+        <div class="line"><span>Mineral sales, not paid yet</span><span class="v">${K0(unpaid)}</span><div class="track"><div class="fill" style="width:${m.sales ? unpaid / m.sales * 100 : 0}%"></div></div></div>
         <div class="note">${salesRows.length} sale${salesRows.length === 1 ? '' : 's'} · ${G(sum(salesRows, r => num(r.grams)))} sold</div>
       </div>
     </a>
@@ -613,90 +729,208 @@ V.dashboard = () => {
   </div>
   <div class="result"><span>Result for ${monthName(selMonth)} (money in − money out)</span><b class="${m.net >= 0 ? 'c-in' : 'c-out'}">${m.net < 0 ? '− ' : ''}${K0(Math.abs(m.net))}</b></div>
   <div class="grid g-kpi">
-    <a class="card kpi" href="#stock" style="text-decoration:none;color:inherit"><span class="label">Gold in stock now</span><span class="value">${G(st.now)}</span><span class="note">Updates itself after every sale</span></a>
-    <a class="card kpi" href="#balances" style="text-decoration:none;color:inherit"><span class="label">Customers still owe us</span><span class="value c-out">${K0(owe)}</span><span class="note">Open advances</span></a>
-    <a class="card kpi" href="#mercury" style="text-decoration:none;color:inherit"><span class="label">Mercury this month</span><span class="value">${G(sum(merc, r => num(r.grams)))}</span><span class="note">${top ? `Most used by ${esc(top[0])} (${Math.round(top[1] / Math.max(1, sum(merc, r => num(r.grams))) * 100)}%)` : 'No mercury used'}</span></a>
+    ${kpiLink('#milk-machines', 'Milk used this month', G(usedMonth), 'By all machines')}
+    ${kpiLink('#milk-machines', 'Milk lost this month', lostText(lostMonth), lostMonth > 0 ? `Worth about ${K0(lostMonth * num(S.settings.milkPrice))}` : 'Nothing lost', lostMonth > 0 ? 'c-out' : '')}
   </div>
   <div class="card chart"><h2>Last 8 weeks<a class="link" href="#report-week">Weekly report →</a></h2>
     ${barChart(wk, [{ k: 'inn', label: 'Money in', color: 'var(--in)' }, { k: 'out', label: 'Money out (without salaries)', color: 'var(--out)' }])}</div>`;
 };
 
-V.sales = () => head('Sales sheet', 'Every sale of gold. Gold sold here is taken off the stock automatically.') + sheetBlock('sales', 'Add sale');
+V.start = () => {
+  const f = (k, label, help, type = 'text') => `<div class="field"><label for="st-${k}">${label}</label><input id="st-${k}" data-start="${k}" type="${type}" ${type === 'text' ? 'inputmode="decimal"' : ''} value="${esc(S.start[k])}"><small>${help}</small></div>`;
+  return head('Starting point', 'Fill this in once, on the day you start using SomZam: what you have right now. After that, every sale, payment, expense and milk use is added or taken off automatically.') + `
+  <div class="card" style="max-width:760px"><h2>1. What you have today</h2><div class="form">
+    ${f('date', 'Start date', 'The day you counted everything', 'date')}
+    ${f('cash', 'Cash in hand (K)', 'Count the cash in the office')}
+    ${f('milk', 'Milk in stock (g)', 'Milk in the store, not inside the machines')}
+    ${f('minerals', 'Minerals in stock (g)', 'Minerals you have not sold yet')}
+  </div></div>
+  <div class="card"><h2>2. Milk inside each machine today</h2><p class="note" style="margin:0 0 10px">This is where each machine starts. The daily milk sheet carries it forward from here.</p>${sheetBlock('machines', 'Add machine')}</div>
+  <div class="card"><h2>3. Customers who already owe an advance</h2><p class="note" style="margin:0 0 10px">Advances from before you started. They are taken off the next time the customer brings minerals.</p>${sheetBlock('startAdv', 'Add customer')}</div>
+  <div class="card"><h2>What you have now</h2><div id="startNow"></div></div>`;
+};
+function renderStartNow() { const el = document.getElementById('startNow'); if (el) el.innerHTML = nowKpis(); }
 
+V.cash = () => {
+  const c = cashMoves();
+  const inn = sum(c.moves, m => m.inn), out = sum(c.moves, m => m.out);
+  return head('Cash book', 'Cash in hand. It starts from the cash on the Starting point and changes with every paid sale, payment to customers, advance, expense, milk purchase and paid salary. Nothing to type here.') + `
+  <div class="grid g-kpi">
+    <div class="card kpi"><span class="label">Cash in hand now</span><span class="value ${c.now < 0 ? 'c-out' : ''}">${K0(c.now)}</span><span class="note">Count the cash to check</span></div>
+    <div class="card kpi"><span class="label">Cash in</span><span class="value c-in">+ ${K0(inn)}</span><span class="note">Sales marked "Paid"</span></div>
+    <div class="card kpi"><span class="label">Cash out</span><span class="value c-out">− ${K0(out)}</span></div>
+    ${kpiLink('#start', 'Starting cash', K0(num(S.start.cash)), 'On ' + (dshort(S.start.date) || 'start date') + ' · change on Starting point')}
+  </div>
+  <div class="card"><h2>Every movement</h2>${dataTable([
+    { h: 'Date', f: r => dshort(r.date) }, { h: 'What', f: r => r.start ? chip('Starting cash', 'neutral') : chip(r.what, r.inn ? 'in' : 'out') }, { h: 'Who / what for', f: r => esc(r.who) },
+    { h: 'In', num: 1, f: r => r.inn ? `<span class="c-in">+ ${K0(r.inn)}</span>` : '' }, { h: 'Out', num: 1, f: r => r.out ? `<span class="c-out">− ${K0(r.out)}</span>` : '' },
+    { h: 'Cash after', num: 1, f: r => `<b>${K0(r.bal)}</b>` }
+  ], [...c.moves].reverse().concat([{ start: 1, date: S.start.date, who: '', inn: 0, out: 0, bal: num(S.start.cash) }]))}</div>`;
+};
+
+V.sales = () => head('Sales sheet', 'Every sale of minerals. Minerals sold here are taken off the stock automatically. Sales marked "Paid" are added to the cash.') + sheetBlock('sales', 'Add sale');
+
+const selPeriod = { week: null, month: null };
 function periodReport(kind) {
-  const keyOf = d => kind === 'week' ? monday(d) : d.slice(0, 7);
-  const keys = [...new Set([...S.sales, ...S.expenses, ...S.intake, ...S.advances, ...S.mercury].map(r => r.date).filter(Boolean).map(keyOf))].sort();
-  const rows = keys.map(k => {
-    const mm = money(d => d && keyOf(d) === k, kind === 'month');
-    const s = S.sales.filter(r => r.date && keyOf(r.date) === k);
-    return { k, label: kind === 'week' ? 'Week of ' + dshort(k) : monthName(k), short: kind === 'week' ? dshort(k) : monthName(k).split(' ')[0].slice(0, 3), count: s.length, grams: sum(s, r => num(r.grams)), ...mm };
+  const keyOf = d => kind === 'week' ? monday(d) : String(d).slice(0, 7);
+  const weekEnd = k => { const d = new Date(k + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + 6); return d.toISOString().slice(0, 10); };
+  const labelOf = k => kind === 'week' ? `Week ${dshort(k)} – ${dshort(weekEnd(k))}` : monthName(k);
+  const daily = [...S.sales, ...S.expenses, ...S.intake, ...S.advances, ...S.milkBought, ...S.machineMilk];
+  const keys = [...new Set(daily.map(r => r.date).filter(Boolean).map(keyOf))].sort();
+  if (!keys.length) return `<div class="card"><p class="note" style="margin:0">Nothing entered yet. As soon as the daily sheets have rows, this report fills itself.</p></div>`;
+  const cash = cashMoves(), mm = deriveMachineMilk(), intakeD = deriveIntake().rows;
+  const upTo = (arr, k, f) => sum(arr.filter(r => r.date && keyOf(r.date) <= k), f);
+  const before = (arr, k, f) => sum(arr.filter(r => r.date && keyOf(r.date) < k), f);
+  const calc = k => {
+    const inP = d => d && keyOf(d) === k;
+    const m = money(inP, kind === 'month');
+    const s = S.sales.filter(r => inP(r.date));
+    const milkRows = S.machineMilk.map((r, i) => ({ r, d: mm.rows[i] })).filter(x => inP(x.r.date));
+    return {
+      k, inP, milkRows, label: labelOf(k), short: kind === 'week' ? dshort(k) : monthName(k).split(' ')[0].slice(0, 3), ...m,
+      count: s.length, soldG: sum(s, r => num(r.grams)), paid: sum(s.filter(r => r.status === 'Paid'), r => num(r.grams) * num(r.price)),
+      inG: sum(S.intake.filter(r => inP(r.date)), r => num(r.grams)),
+      milkUsed: sum(milkRows, x => num(x.r.used)), milkLost: sum(milkRows, x => (x.d && x.d.lost) || 0),
+      cashStart: num(S.start.cash) + before(cash.moves, k, x => x.inn - x.out),
+      cashEnd: num(S.start.cash) + upTo(cash.moves, k, x => x.inn - x.out),
+      stockEnd: num(S.start.minerals) + upTo(S.intake, k, r => num(r.grams)) - upTo(S.sales, k, r => num(r.grams)),
+      milkEnd: num(S.start.milk) + upTo(S.milkBought, k, r => num(r.grams)) - upTo(S.machineMilk, k, r => num(r.added))
+    };
+  };
+  const rows = keys.map(calc);
+  if (!keys.includes(selPeriod[kind])) selPeriod[kind] = keys[keys.length - 1];
+  const c = rows.find(r => r.k === selPeriod[kind]);
+  const line = (t, v, max, cls) => `<div class="line"><span>${t}</span><span class="v">${K0(v)}</span><div class="track"><div class="fill ${cls}" style="width:${max ? v / max * 100 : 0}%"></div></div></div>`;
+  const outL = [['Paid for minerals (incl. transport, private)', c.minerals], ['Advances given', c.advances], ['Daily expenses', c.expenses], ['Milk bought', c.milk]].concat(kind === 'month' ? [['Salaries', c.salaries]] : []);
+  const maxOut = Math.max(1, ...outL.map(l => l[1]));
+  // breakdowns for the chosen period
+  const perCat = {}; S.expenses.filter(r => c.inP(r.date)).forEach(r => perCat[r.category || 'Other'] = (perCat[r.category || 'Other'] || 0) + num(r.amount));
+  const cats = Object.entries(perCat).sort((a, b) => b[1] - a[1]);
+  const perMachine = S.machines.map(mch => {
+    const xs = c.milkRows.filter(x => norm(x.r.machine) === norm(mch.no));
+    return { no: mch.no, name: mch.name, days: xs.length, added: sum(xs, x => num(x.r.added)), used: sum(xs, x => num(x.r.used)), lost: sum(xs, x => (x.d && x.d.lost) || 0) };
   });
-  const recent = kind === 'week' ? rows.slice(-10) : rows;
-  return `<div class="card chart"><h2>Sales per ${kind}</h2>${barChart(recent.map(r => ({ label: r.short, inn: r.sales, out: r.out })), [{ k: 'inn', label: 'Sales (money in)', color: 'var(--in)' }, { k: 'out', label: kind === 'week' ? 'Money out (without salaries)' : 'Money out', color: 'var(--out)' }])}</div>
+  const perCust = {}; S.intake.forEach((r, i) => { if (!c.inP(r.date)) return; const n = String(r.customer || '?').trim(); const o = perCust[norm(n)] = perCust[norm(n)] || { name: n, g: 0, value: 0, pay: 0 }; o.g += num(r.grams); o.value += (intakeD[i] || {}).value || 0; o.pay += Math.max(0, (intakeD[i] || {}).pay || 0); });
+  const custs = Object.values(perCust).sort((a, b) => b.g - a.g);
+  const signedK = v => `<b class="${v >= 0 ? 'c-in' : 'c-out'}">${v < 0 ? '− ' : ''}${K0(Math.abs(v))}</b>`;
+
+  return `<div class="sheet-tools" style="margin-bottom:12px"><label class="note" for="periodSel">${kind === 'week' ? 'Week' : 'Month'}</label>
+    <select class="btn" id="periodSel" data-kind="${kind}">${[...keys].reverse().map(k => `<option value="${k}"${k === c.k ? ' selected' : ''}>${labelOf(k)}</option>`).join('')}</select>
+    <span class="hint">Everything below is added up from the daily sheets. Nothing to type here.</span></div>
+  <div class="grid g-2e">
+    <div class="card big in"><div class="top"><span class="ic">${svg(I.in)}</span><span class="title">Money in</span></div>
+      <div class="amount">${K0(c.sales)}</div>
+      <div class="lines">${line('Mineral sales, paid', c.paid, c.sales, 'in')}${line('Mineral sales, not paid yet', c.sales - c.paid, c.sales, '')}
+      <div class="note">${c.count} sale${c.count === 1 ? '' : 's'} · ${G(c.soldG)} sold</div></div></div>
+    <div class="card big out"><div class="top"><span class="ic">${svg(I.out)}</span><span class="title">Money out</span></div>
+      <div class="amount">${K0(c.out)}</div>
+      <div class="lines">${outL.map(l => line(l[0], l[1], maxOut, 'out')).join('')}</div></div>
+  </div>
+  <div class="result"><span>Result for ${c.label} (money in − money out)</span>${signedK(c.net)}</div>
+  <div class="grid g-kpi">
+    <div class="card kpi"><span class="label">Cash</span><span class="value">${K0(c.cashEnd)}</span><span class="note">At the end · was ${K0(c.cashStart)} at the start</span></div>
+    <div class="card kpi"><span class="label">Minerals</span><span class="value">${G(c.stockEnd)}</span><span class="note">In stock at the end · +${G(c.inG)} in, −${G(c.soldG)} sold</span></div>
+    <div class="card kpi"><span class="label">Milk</span><span class="value">${G(c.milkEnd)}</span><span class="note">In stock at the end · ${G(c.milkUsed)} used</span></div>
+    <div class="card kpi"><span class="label">Milk lost</span><span class="value ${c.milkLost > 0 ? 'c-out' : ''}">${lostText(c.milkLost)}</span><span class="note">${c.milkLost > 0 ? 'About ' + K0(c.milkLost * num(S.settings.milkPrice)) : 'Nothing lost'}</span></div>
+  </div>
+  <div class="grid g-2e">
+    <div class="card"><h2>Milk per machine</h2>${dataTable([
+      { h: 'Machine', f: r => `<b>${esc(r.no)}</b> ${esc(r.name)}` }, { h: 'Days', num: 1, f: r => r.days },
+      { h: 'Added', num: 1, f: r => G(r.added) }, { h: 'Used', num: 1, f: r => G(r.used) },
+      { h: 'Lost', num: 1, f: r => `<span class="${r.lost > 0 ? 'c-out' : ''}">${lostText(r.lost)}</span>` }
+    ], perMachine, ['Total', sum(perMachine, r => r.days), G(sum(perMachine, r => r.added)), G(sum(perMachine, r => r.used)), lostText(sum(perMachine, r => r.lost))])}</div>
+    <div class="card"><h2>Expenses per category</h2>${cats.length ? `<div class="lines">${cats.map(([t, v]) => line(esc(t), v, cats[0][1], 'out')).join('')}</div>
+      <p class="note" style="margin:12px 0 0">Total ${K0(c.expenses)}</p>` : '<p class="note" style="margin:0">No expenses.</p>'}</div>
+  </div>
+  <div class="card"><h2>Minerals brought in per customer</h2>${custs.length ? dataTable([
+    { h: 'Customer', f: r => `<b>${esc(r.name)}</b>` }, { h: 'Minerals', num: 1, f: r => G(r.g) }, { h: 'Value', num: 1, f: r => K0(r.value) }, { h: 'Paid to customer', num: 1, f: r => K0(r.pay) }
+  ], custs, ['Total', G(sum(custs, r => r.g)), K0(sum(custs, r => r.value)), K0(sum(custs, r => r.pay))]) : '<p class="note" style="margin:0">No minerals brought in.</p>'}</div>
+  <div class="card chart"><h2>All ${kind === 'week' ? 'weeks' : 'months'}</h2>${barChart((kind === 'week' ? rows.slice(-10) : rows).map(r => ({ label: r.short, inn: r.sales, out: r.out })), [{ k: 'inn', label: 'Money in', color: 'var(--in)' }, { k: 'out', label: kind === 'week' ? 'Money out (without salaries)' : 'Money out', color: 'var(--out)' }])}</div>
   <div class="card">${dataTable([
-    { h: kind === 'week' ? 'Week' : 'Month', f: r => r.label }, { h: 'Sales', num: 1, f: r => r.count }, { h: 'Gold sold', num: 1, f: r => G(r.grams) },
+    { h: kind === 'week' ? 'Week' : 'Month', f: r => r.k === c.k ? `<b>${r.label}</b>` : r.label },
+    { h: 'Minerals in', num: 1, f: r => G(r.inG) }, { h: 'Minerals sold', num: 1, f: r => G(r.soldG) },
     { h: 'Money in', num: 1, f: r => `<span class="c-in">${K0(r.sales)}</span>` }, { h: 'Money out', num: 1, f: r => `<span class="c-out">${K0(r.out)}</span>` },
-    { h: 'Result', num: 1, f: r => `<b class="${r.net >= 0 ? 'c-in' : 'c-out'}">${r.net < 0 ? '− ' : ''}${K0(Math.abs(r.net))}</b>` }
-  ], [...rows].reverse(), ['Total', sum(rows, r => r.count), G(sum(rows, r => r.grams)), K0(sum(rows, r => r.sales)), K0(sum(rows, r => r.out)), K0(sum(rows, r => r.net))])}
-  ${kind === 'week' ? '<p class="note" style="margin:10px 0 0">Salaries are paid monthly, so they are counted in the monthly report only.</p>' : ''}</div>`;
+    { h: 'Result', num: 1, f: r => signedK(r.net) }, { h: 'Milk used', num: 1, f: r => G(r.milkUsed) }, { h: 'Milk lost', num: 1, f: r => lostText(r.milkLost) },
+    { h: 'Cash at end', num: 1, f: r => `<b>${K0(r.cashEnd)}</b>` }
+  ], [...rows].reverse(), ['Total', G(sum(rows, r => r.inG)), G(sum(rows, r => r.soldG)), K0(sum(rows, r => r.sales)), K0(sum(rows, r => r.out)), signedK(sum(rows, r => r.net)), G(sum(rows, r => r.milkUsed)), lostText(sum(rows, r => r.milkLost)), ''])}
+  ${kind === 'week' ? '<p class="note" style="margin:10px 0 0">Salaries are paid monthly, so they are in the monthly report only. Cash at end does include salaries marked "Paid".</p>' : ''}</div>`;
 }
-V['report-week'] = () => head('Weekly report', 'Sales and costs per week (Monday to Sunday). Calculated from the sheets, nothing to type here.') + periodReport('week');
-V['report-month'] = () => head('Monthly report', 'Sales and costs per month, including salaries.') + periodReport('month');
+V['report-week'] = () => head('Weekly report', 'Monday to Sunday. Everything entered during the week, added up automatically.') + periodReport('week');
+V['report-month'] = () => head('Monthly report', 'Everything entered during the month, added up automatically, including salaries.') + periodReport('month');
 
-V.expenses = () => head('Daily expenses', 'Food, fuel, gas, transport, repairs and other daily costs.') + sheetBlock('expenses', 'Add expense');
+V.expenses = () => head('Daily expenses', 'Food, fuel, gas, transport, repairs and other daily costs. Each one is taken off the cash automatically.') + sheetBlock('expenses', 'Add expense');
 
-V.mercury = () => head('Mercury use', 'Write down how much mercury each machine uses. The cost and the machine that uses the most are calculated automatically.') + `
-  <div class="grid g-2" id="mercSummary"></div>` + sheetBlock('mercury', 'Add mercury use');
-function renderMercurySummary() {
-  const host = document.getElementById('mercSummary'); if (!host) return;
-  const total = sum(S.mercury, r => num(r.grams));
-  const per = {}, perUse = {};
-  S.mercury.forEach(r => { per[r.machine || '?'] = (per[r.machine || '?'] || 0) + num(r.grams); perUse[r.use || 'Other'] = (perUse[r.use || 'Other'] || 0) + num(r.grams); });
-  const list = Object.entries(per).sort((a, b) => b[1] - a[1]);
-  const uses = Object.entries(perUse).sort((a, b) => b[1] - a[1]);
-  const name = no => (S.machines.find(m => norm(m.no) === norm(no)) || {}).name || '';
-  host.innerHTML = `<div class="card"><h2>Per machine</h2>
-    ${list.length ? `<div class="callout" style="margin-bottom:12px">${esc(list[0][0])} ${esc(name(list[0][0]))} uses the most mercury: ${Math.round(list[0][1] / Math.max(1, total) * 100)}% of all.</div>` : ''}
-    <div class="lines">${list.map(([no, g]) => `<div class="line"><span>${esc(no)} · ${esc(name(no))}</span><span class="v">${G(g)} · ${K0(g * num(S.settings.mercuryPrice))}</span><div class="track"><div class="fill" style="width:${g / Math.max(1, list[0][1]) * 100}%"></div></div></div>`).join('')}</div></div>
-    <div class="card"><h2>Where it goes</h2><div class="lines">${uses.map(([u, g]) => `<div class="line"><span>${esc(u)}</span><span class="v">${Math.round(g / Math.max(1, total) * 100)}%</span><div class="track"><div class="fill out" style="width:${g / Math.max(1, total) * 100}%"></div></div></div>`).join('')}</div>
-    <p class="note" style="margin:12px 0 0">Total ${G(total)} · ${K(total * num(S.settings.mercuryPrice))} at ${K(num(S.settings.mercuryPrice))} per gram</p></div>`;
+V['milk-machines'] = () => head('Milk per machine', 'One row per machine per day. What is left carries over to the next day by itself. Milk added here is taken off the milk stock.') + `
+  <div class="grid g-kpi" id="milkSummary"></div>
+  <div class="legend-row" style="margin:6px 0 4px"><span><i style="background:var(--surface)"></i>You type</span><span><i style="background:var(--calc)"></i>Calculated</span>
+  <span>Balance = from day before + added − used · Lost = balance − counted left</span></div>` +
+  sheetBlock('machineMilk', 'Add one row', `<button class="btn" data-add-day="1">+ Add today for all ${S.machines.length} machines</button>`);
+function renderMilkSummary() {
+  const host = document.getElementById('milkSummary'); if (!host) return;
+  const d = deriveMachineMilk();
+  const totalLost = sum(Object.values(d.lost), v => v);
+  host.innerHTML = S.machines.map(m => {
+    const k = norm(m.no), l = d.lost[k] || 0;
+    return `<div class="card kpi"><span class="label">${esc(m.no)} · ${esc(m.name)}</span><span class="value">${G(d.now[k] || 0)}</span><span class="note">Inside now · lost so far: <b class="${l > 0 ? 'c-out' : ''}">${lostText(l)}</b></span></div>`;
+  }).join('') + `<div class="card kpi"><span class="label">All machines</span><span class="value">${G(sum(Object.values(d.now), v => v))}</span><span class="note">Lost so far: <b class="${totalLost > 0 ? 'c-out' : ''}">${lostText(totalLost)}</b>${totalLost > 0 ? ` · about ${K0(totalLost * num(S.settings.milkPrice))}` : ''}</span></div>`;
 }
 
-V.salaries = () => head('Salaries', 'Monthly salary and days off per employee.') + sheetBlock('salaries', 'Add employee');
+V.milk = () => head('Milk stock', 'Milk in the store. Starts from the Starting point, goes up when you buy milk and down when milk is given to a machine.') + `
+  <div id="milkStock"></div>
+  <div class="card"><h2>Milk bought</h2><p class="note" style="margin:0 0 10px">The amount paid is taken off the cash.</p>${sheetBlock('milkBought', 'Add milk bought')}</div>
+  <div class="card"><h2>Every movement</h2><div id="milkMoves"></div></div>`;
+function renderMilkStock() {
+  const host = document.getElementById('milkStock'); if (!host) return;
+  const st = milkMoves();
+  const inn = sum(st.moves, m => m.inn), out = sum(st.moves, m => m.out);
+  host.innerHTML = `<div class="grid g-kpi">
+    <div class="card kpi"><span class="label">Milk in stock now</span><span class="value ${st.now < 0 ? 'c-out' : ''}">${G(st.now)}</span></div>
+    <div class="card kpi"><span class="label">Bought</span><span class="value c-in">+ ${G(inn)}</span></div>
+    ${kpiLink('#milk-machines', 'Given to machines', '− ' + G(out), 'See milk per machine', 'c-out')}
+    ${kpiLink('#start', 'Starting stock', G(num(S.start.milk)), 'Change on Starting point')}
+  </div>`;
+  document.getElementById('milkMoves').innerHTML = dataTable([
+    { h: 'Date', f: r => dshort(r.date) }, { h: 'What', f: r => chip(r.what, r.inn ? 'in' : 'out') }, { h: 'From / machine', f: r => esc(r.who) },
+    { h: 'In', num: 1, f: r => r.inn ? `<span class="c-in">+ ${G(r.inn)}</span>` : '' }, { h: 'Out', num: 1, f: r => r.out ? `<span class="c-out">− ${G(r.out)}</span>` : '' },
+    { h: 'Stock after', num: 1, f: r => `<b>${G(r.bal)}</b>` }
+  ], [...st.moves].reverse());
+}
 
-V.advances = () => head('Advances given', 'Money paid to a customer before they bring gold. It is taken off automatically the next time they bring gold.') + sheetBlock('advances', 'Add advance');
+V.salaries = () => head('Salaries', 'Monthly salary and days off per employee. When a salary is marked "Paid", it is taken off the cash on the "Paid on" date.') + sheetBlock('salaries', 'Add employee');
 
-V.intake = () => head('Gold brought in', 'A customer brings gold. The open advance, transport and machine cost are taken off, and you see what to pay.') + `
+V.advances = () => head('Advances given', 'Money paid to a customer before they bring minerals. It is taken off the cash now, and off what they get the next time they bring minerals.') + sheetBlock('advances', 'Add advance');
+
+V.intake = () => head('Minerals brought in', 'A customer brings minerals. The open advance, transport, machine cost and any private payment are taken off, and you see what to pay.') + `
   <div class="legend-row"><span><i style="background:var(--surface)"></i>You type</span><span><i style="background:var(--calc)"></i>Calculated</span>
-  <span>Pay to customer = gold value − advance before − transport − machine cost</span></div>` + sheetBlock('intake', 'Add gold brought in');
+  <span>Pay to customer = minerals × K ${num(S.settings.buyPrice).toLocaleString('en-US')} − advance before − transport − machine cost (K ${num(S.settings.machineCost).toLocaleString('en-US')}) − private payment. Below zero = new advance the customer owes.</span></div>` + sheetBlock('intake', 'Add minerals brought in');
 
 V.balances = () => {
   const { rows, bal } = deriveIntake();
   const names = {};
-  [...S.advances.map(r => r.customer), ...S.intake.map(r => r.customer)].forEach(n => { if (String(n || '').trim()) names[norm(n)] = n.trim(); });
+  [...S.startAdv.map(r => r.customer), ...S.advances.map(r => r.customer), ...S.intake.map(r => r.customer)].forEach(n => { if (String(n || '').trim()) names[norm(n)] = n.trim(); });
   const list = Object.keys(names).map(k => ({
     name: names[k],
-    adv: sum(S.advances.filter(r => norm(r.customer) === k), r => num(r.amount)),
+    adv: sum([...S.startAdv, ...S.advances].filter(r => norm(r.customer) === k), r => num(r.amount)),
     grams: sum(S.intake.filter(r => norm(r.customer) === k), r => num(r.grams)),
     paid: sum(S.intake.map((r, i) => ({ r, d: rows[i] })).filter(x => norm(x.r.customer) === k), x => Math.max(0, x.d ? x.d.pay : 0)),
     owe: bal[k] || 0
   })).sort((a, b) => b.owe - a.owe);
-  return head('Customer balances', 'Per customer: advances given, gold brought, money paid and what they still owe. Calculated automatically.') +
+  return head('Customer balances', 'Per customer: advances (including from before the start), minerals brought, money paid and what they still owe. Calculated automatically.') +
     `<div class="card">${dataTable([
-      { h: 'Customer', f: r => `<b>${esc(r.name)}</b>` }, { h: 'Advances given', num: 1, f: r => K0(r.adv) }, { h: 'Gold brought', num: 1, f: r => G(r.grams) },
-      { h: 'Paid for gold', num: 1, f: r => K0(r.paid) }, { h: 'Still owes us', num: 1, f: r => r.owe > 0 ? chip(K0(r.owe), 'out') : chip('Nothing', 'in') }
+      { h: 'Customer', f: r => `<b>${esc(r.name)}</b>` }, { h: 'Advances given', num: 1, f: r => K0(r.adv) }, { h: 'Minerals brought', num: 1, f: r => G(r.grams) },
+      { h: 'Paid for minerals', num: 1, f: r => K0(r.paid) }, { h: 'Still owes us', num: 1, f: r => r.owe > 0 ? chip(K0(r.owe), 'out') : chip('Nothing', 'in') }
     ], list, ['Total', K0(sum(list, r => r.adv)), G(sum(list, r => r.grams)), K0(sum(list, r => r.paid)), K0(sum(list, r => r.owe))])}</div>`;
 };
 
 V.stock = () => {
   const st = stockMoves();
   const inn = sum(st.moves, m => m.inn), out = sum(st.moves, m => m.out);
-  return head('Gold in stock', 'Comes automatically from "Gold brought in" (stock goes up) and the "Sales sheet" (stock goes down). Nothing to type here.') + `
+  return head('Minerals in stock', 'Comes automatically from "Minerals brought in" (stock goes up) and the "Sales sheet" (stock goes down). Nothing to type here.') + `
   <div class="grid g-kpi">
     <div class="card kpi"><span class="label">Available now</span><span class="value">${G(st.now)}</span><span class="note">Worth about ${K0(st.now * num(S.settings.sellPrice))} at today's selling price</span></div>
     <div class="card kpi"><span class="label">Brought in by customers</span><span class="value c-in">+ ${G(inn)}</span></div>
     <div class="card kpi"><span class="label">Sold</span><span class="value c-out">− ${G(out)}</span></div>
-    <div class="card kpi"><span class="label">Opening stock</span><span class="value">${G(num(S.settings.opening))}</span><span class="note">Change in Setup</span></div>
+    ${kpiLink('#start', 'Starting stock', G(num(S.start.minerals)), 'Change on Starting point')}
   </div>
   <div class="card"><h2>Every movement</h2>${dataTable([
     { h: 'Date', f: r => dshort(r.date) }, { h: 'What', f: r => chip(r.what, r.inn ? 'in' : 'out') }, { h: 'Customer / buyer', f: r => esc(r.who) },
@@ -706,19 +940,19 @@ V.stock = () => {
 };
 
 V.prices = () => {
-  const f = (k, label, help, step = '0.01') => `<div class="field"><label for="set-${k}">${label}</label><input id="set-${k}" data-set="${k}" inputmode="decimal" value="${esc(S.settings[k])}"><small>${help}</small></div>`;
-  return head('Prices and fixed costs', 'Change these when prices move. New rows use these values; old rows keep their own price.') + `
+  const f = (k, label, help) => `<div class="field"><label for="set-${k}">${label}</label><input id="set-${k}" data-set="${k}" inputmode="decimal" value="${esc(S.settings[k])}"><small>${help}</small></div>`;
+  return head('Prices and fixed costs', 'New rows use these values; old rows keep their own price.') + `
   <div class="card" style="max-width:760px"><div class="form">
-    ${f('buyPrice', 'Buying price per gram (K)', 'Used when a customer brings gold')}
+    ${f('buyPrice', 'Price per gram of minerals (K)', 'Fixed price paid to customers who bring minerals')}
+    ${f('machineCost', 'Machine cost (K)', 'Fixed amount taken off every time a customer brings minerals')}
+    ${f('transport', 'Transport, usual amount (K)', 'Filled in for new rows; change it per row if different')}
     ${f('sellPrice', 'Selling price per gram (K)', 'Used for new sales')}
-    ${f('transport', 'Transport, fixed amount (K)', 'Taken off every time gold is brought in')}
-    ${f('mercuryPrice', 'Mercury price per gram (K)', 'Used to calculate mercury cost')}
-    ${f('opening', 'Opening gold stock (g)', 'Gold you already had before using this website')}
+    ${f('milkPrice', 'Milk price per gram (K)', 'Used to show what lost milk is worth')}
   </div></div>
   <div class="card" style="max-width:760px"><h2>Test data</h2><p class="note" style="margin:0 0 12px">Everything you type is saved in this browser only. This button puts the example data back.</p>
   <button class="btn" id="resetBtn">Reset example data</button></div>`;
 };
-V.machines = () => head('Machines', 'Each machine has a number and a fixed cost. The fixed cost is taken off when gold goes through that machine.') + sheetBlock('machines', 'Add machine');
+V.machines = () => head('Machines', 'The 5 machines, the milk inside each one at the start, and what is inside now.') + sheetBlock('machines', 'Add machine');
 
 // ================= Router =================
 const label = {};
@@ -740,8 +974,7 @@ function route() {
   const [grp, name] = label[id];
   document.getElementById('crumb').innerHTML = grp ? `${grp} / <b>${name}</b>` : `<b>${name}</b>`;
   document.getElementById('view').innerHTML = V[id]();
-  if (SHEETS[id]) mountSheet(id);
-  if (id === 'mercury') renderMercurySummary();
+  document.querySelectorAll('#view [id^="sheet-"]').forEach(h => mountSheet(h.id.slice(6)));
   document.getElementById('app').classList.remove('menu-open');
   window.scrollTo(0, 0);
 }
@@ -763,9 +996,11 @@ function onCellChange(e) {
     return;
   }
   if (t.dataset.set) { S.settings[t.dataset.set] = num(t.value); persist(); return; }
+  if (t.dataset.start) { S.start[t.dataset.start] = t.dataset.start === 'date' ? t.value : num(t.value); persist(); renderStartNow(); return; }
   if (t.id === 'monthSel') { selMonth = t.value; route(); }
+  if (t.id === 'periodSel') { selPeriod[t.dataset.kind] = t.value; route(); }
 }
-document.addEventListener('input', e => { if (e.target.closest('table.sheet') || e.target.dataset.set) onCellChange(e); });
+document.addEventListener('input', e => { if (e.target.closest('table.sheet') || e.target.dataset.set || e.target.dataset.start) onCellChange(e); });
 document.addEventListener('change', onCellChange);
 document.addEventListener('focusout', e => { if (e.target.closest('table.sheet')) renderLists(); });
 
@@ -790,6 +1025,11 @@ document.addEventListener('click', e => {
   if (g) { const i = +g.dataset.group; openGroups.has(i) ? openGroups.delete(i) : openGroups.add(i); renderNav(currentId()); return; }
   const add = e.target.closest('[data-add]');
   if (add) { addRow(add.dataset.add); return; }
+  if (e.target.closest('[data-add-day]')) {
+    const first = S.machineMilk.length;
+    machineNos().forEach(no => S.machineMilk.push({ date: todayStr(), machine: no, added: '', used: '', left: '' }));
+    persist(); mountSheet('machineMilk', { r: first, k: 'added' }); toast(`${machineNos().length} rows added for today`); return;
+  }
   const del = e.target.closest('[data-del]');
   if (del) { const key = del.closest('table.sheet').dataset.sheet; S[key].splice(+del.dataset.del, 1); persist(); mountSheet(key); toast('Row deleted'); return; }
   if (e.target.id === 'resetBtn') { S = JSON.parse(JSON.stringify(EXAMPLE)); persist(); selMonth = null; route(); toast('Example data is back'); }
