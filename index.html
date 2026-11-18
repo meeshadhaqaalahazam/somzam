@@ -187,7 +187,19 @@ table.sheet { border-collapse: collapse; width: max-content; min-width: 100%; fo
   .big .amount { font-size: 28px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.sheet input:disabled, .sheet select:disabled { color: var(--fg); opacity: .7; cursor: not-allowed; -webkit-text-fill-color: var(--fg); }
+.field input:disabled { opacity: .7; cursor: not-allowed; }
+.sheet td.by { font-size: 12px; color: var(--muted); white-space: nowrap; }
+[hidden] { display: none !important; }
+#login { min-height: 100vh; display: grid; place-items: center; padding: 16px; background: var(--bg); }
+.login-card { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 14px; }
+.login-card h1 { margin: 0; font-size: 22px; }
+.user-box { display: flex; align-items: center; gap: 8px; font-size: 13px; white-space: nowrap; }
+.user-box .btn { padding: 5px 10px; font-size: 12.5px; }
+.test-pill.ok { background: var(--in-soft); color: var(--in); } .test-pill.bad { background: var(--out-soft); color: var(--out); }
+@media (max-width: 760px) { .user-box .who { display: none; } .test-pill.bad { display: inline-block; } }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 
 <div class="app" id="app">
   <aside class="side" aria-label="Main menu">
@@ -204,7 +216,7 @@ table.sheet { border-collapse: collapse; width: max-content; min-width: 100%; fo
       <button class="menu-btn" id="menuBtn" aria-label="Open menu"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
       <div class="crumb" id="crumb"></div>
       <div class="spacer"></div>
-      <span class="test-pill">Saved in this browser only</span>
+      <span class="user-box" id="userBox"></span><span class="test-pill" id="syncPill">Saved in this browser only</span>
     </header>
     <main class="content" id="view"></main>
   </div>
@@ -213,6 +225,20 @@ table.sheet { border-collapse: collapse; width: max-content; min-width: 100%; fo
 <div class="toast" id="toast" hidden></div>
 
 <script>
+// ================= Online database (Supabase) =================
+// Fill in the Project URL and the anon / publishable key from Supabase → Project Settings → API.
+// Left empty, SomZam saves in this browser only.
+const SUPABASE_URL = 'https://eipadrhqxbwnldbguzhj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_3bS1n6hbNvcvbZOUv6UHoQ_iDiSBsH3';
+const CLOUD = !!(SUPABASE_URL && SUPABASE_KEY);
+const sb = CLOUD && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+let me = null, people = {};
+const isOwner = () => !CLOUD || (me && me.role === 'owner');
+const STAFF_SHEETS = new Set(['sales', 'expenses', 'intake', 'advances', 'milkBought', 'machineMilk']);
+const canAdd = key => isOwner() || STAFF_SHEETS.has(key);
+const canEdit = (key, row) => isOwner() || (STAFF_SHEETS.has(key) && me && row._by === me.id);
+const personName = id => { const p = people[id]; return p ? (p.name || String(p.email || '').split('@')[0]) : ''; };
+
 // ================= Icons & navigation =================
 const I = {
   home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
@@ -239,7 +265,7 @@ const NAV = [
     { id: 'intake', label: 'Minerals brought in' }, { id: 'advances', label: 'Advances given' }, { id: 'balances', label: 'Customer balances' } ] },
   { label: 'Milk', icon: 'drop', children: [ { id: 'milk-machines', label: 'Milk per machine' }, { id: 'milk', label: 'Milk stock' } ] },
   { label: 'Minerals stock', icon: 'stock', children: [ { id: 'stock', label: 'Stock now' } ] },
-  { label: 'Setup', icon: 'cog', children: [ { id: 'prices', label: 'Prices and fixed costs' }, { id: 'machines', label: 'Machines' } ] }
+  { label: 'Setup', icon: 'cog', children: [ { id: 'prices', label: 'Prices and fixed costs' }, { id: 'machines', label: 'Machines' }, { id: 'team', label: 'Team' } ] }
 ];
 
 // ================= Example data (Zambian kwacha, grams) =================
@@ -265,7 +291,7 @@ function load() {
   S = JSON.parse(JSON.stringify(EXAMPLE));
   if (saved && typeof saved === 'object') Object.keys(S).forEach(k => { if (saved[k] !== undefined) S[k] = saved[k]; });
 }
-function persist() { try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) { /* storage blocked: keep working in memory */ } }
+function persist() { if (CLOUD) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) { /* storage blocked: keep working in memory */ } }
 load();
 
 // ================= Helpers =================
@@ -508,23 +534,25 @@ function fmtCell(f, v) {
 function sheetHtml(key) {
   const sh = SHEETS[key], rows = S[key];
   const cols = sh.cols;
+  const showBy = CLOUD && key !== 'machines';
   const cell = (c, row, r) => {
+    const ro = canEdit(key, row) ? '' : ' disabled';
     if (c.t === 'calc') return `<td class="calc ${c.strong ? 'strong' : ''}" data-calc="${c.k}" data-r="${r}"></td>`;
     if (c.t === 'select') {
       const opts = typeof c.opts === 'function' ? c.opts() : c.opts;
       const all = opts.includes(row[c.k]) || !row[c.k] ? opts : [row[c.k], ...opts];
-      return `<td><select data-r="${r}" data-k="${c.k}" aria-label="${esc(c.h)} row ${r + 1}">${row[c.k] ? '' : '<option></option>'}${all.map(o => `<option${o === row[c.k] ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select></td>`;
+      return `<td><select${ro} data-r="${r}" data-k="${c.k}" aria-label="${esc(c.h)} row ${r + 1}">${row[c.k] ? '' : '<option></option>'}${all.map(o => `<option${o === row[c.k] ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select></td>`;
     }
     const type = c.t === 'date' ? 'date' : 'text';
-    return `<td><input type="${type}" class="${c.t === 'num' ? 'n' : ''}" ${c.t === 'num' ? 'inputmode="decimal"' : ''} ${c.list ? `list="${c.list}"` : ''}
+    return `<td><input${ro} type="${type}" class="${c.t === 'num' ? 'n' : ''}" ${c.t === 'num' ? 'inputmode="decimal"' : ''} ${c.list ? `list="${c.list}"` : ''}
       data-r="${r}" data-k="${c.k}" value="${esc(row[c.k])}" aria-label="${esc(c.h)} row ${r + 1}" autocomplete="off"></td>`;
   };
   const hasTotals = cols.some(c => c.total);
   return `<div class="sheet-wrap"><table class="sheet" data-sheet="${key}">
-    <thead><tr class="letters"><th class="rn"></th>${cols.map((c, i) => `<th style="min-width:${c.w}px">${LETTERS[i]}</th>`).join('')}</tr>
-    <tr class="names"><th class="rn"></th>${cols.map(c => `<th class="${c.t === 'num' || (c.t === 'calc' && c.f !== 'text') ? 'r' : ''}">${c.h}</th>`).join('')}</tr></thead>
-    <tbody>${rows.map((row, r) => `<tr><td class="rn">${r + 1}<button type="button" data-del="${r}" aria-label="Delete row ${r + 1}" title="Delete row">×</button></td>${cols.map(c => cell(c, row, r)).join('')}</tr>`).join('')}</tbody>
-    ${hasTotals ? `<tfoot><tr><td class="rn">Σ</td>${cols.map((c, i) => `<td class="${c.total ? 'num' : ''}" data-total="${c.total ? c.k : ''}">${i === 0 && !c.total ? 'Total' : ''}</td>`).join('')}</tr></tfoot>` : ''}
+    <thead><tr class="letters"><th class="rn"></th>${cols.map((c, i) => `<th style="min-width:${c.w}px">${LETTERS[i]}</th>`).join('')}${showBy ? `<th style="min-width:120px">${LETTERS[cols.length]}</th>` : ''}</tr>
+    <tr class="names"><th class="rn"></th>${cols.map(c => `<th class="${c.t === 'num' || (c.t === 'calc' && c.f !== 'text') ? 'r' : ''}">${c.h}</th>`).join('')}${showBy ? '<th>Entered by</th>' : ''}</tr></thead>
+    <tbody>${rows.map((row, r) => `<tr><td class="rn">${r + 1}${canEdit(key, row) ? `<button type="button" data-del="${r}" aria-label="Delete row ${r + 1}" title="Delete row">×</button>` : ''}</td>${cols.map(c => cell(c, row, r)).join('')}${showBy ? `<td class="calc by">${esc(personName(row._by))}</td>` : ''}</tr>`).join('')}</tbody>
+    ${hasTotals ? `<tfoot><tr><td class="rn">Σ</td>${cols.map((c, i) => `<td class="${c.total ? 'num' : ''}" data-total="${c.total ? c.k : ''}">${i === 0 && !c.total ? 'Total' : ''}</td>`).join('')}${showBy ? '<td></td>' : ''}</tr></tfoot>` : ''}
   </table></div>`;
 }
 
@@ -559,13 +587,15 @@ function mountSheet(key, focus) {
 }
 
 function addRow(key, focusKey) {
-  S[key].push(SHEETS[key].blank());
-  persist();
+  if (!canAdd(key)) return;
+  const row = newRow(key, SHEETS[key].blank());
+  S[key].push(row);
+  saveRow(key, row);
   mountSheet(key, { r: S[key].length - 1, k: focusKey || SHEETS[key].cols.find(c => c.t !== 'calc').k });
 }
 
 const sheetBlock = (key, addLabel, extra = '') => `
-  <div class="sheet-tools"><button class="btn primary" data-add="${key}">+ ${addLabel}</button>${extra}
+  <div class="sheet-tools">${canAdd(key) ? `<button class="btn primary" data-add="${key}">+ ${addLabel}</button>${extra}` : ''}
   <span class="hint">Type like in Excel. Enter goes to the next row. Grey columns are calculated.</span></div>
   <div id="sheet-${key}"></div>`;
 
@@ -671,7 +701,7 @@ V.dashboard = () => {
 };
 
 V.start = () => {
-  const f = (k, label, help, type = 'text') => `<div class="field"><label for="st-${k}">${label}</label><input id="st-${k}" data-start="${k}" type="${type}" ${type === 'text' ? 'inputmode="decimal"' : ''} value="${esc(S.start[k])}"><small>${help}</small></div>`;
+  const f = (k, label, help, type = 'text') => `<div class="field"><label for="st-${k}">${label}</label><input${isOwner() ? '' : ' disabled'} id="st-${k}" data-start="${k}" type="${type}" ${type === 'text' ? 'inputmode="decimal"' : ''} value="${esc(S.start[k])}"><small>${help}</small></div>`;
   return head('Starting point', 'Fill this in once, on the day you start using SomZam: what you have right now. After that, every sale, payment, expense and milk use is added or taken off automatically.') + `
   <div class="card" style="max-width:760px"><h2>1. What you have today</h2><div class="form">
     ${f('date', 'Start date', 'The day you counted everything', 'date')}
@@ -874,7 +904,7 @@ V.stock = () => {
 };
 
 V.prices = () => {
-  const f = (k, label, help) => `<div class="field"><label for="set-${k}">${label}</label><input id="set-${k}" data-set="${k}" inputmode="decimal" value="${esc(S.settings[k])}"><small>${help}</small></div>`;
+  const f = (k, label, help) => `<div class="field"><label for="set-${k}">${label}</label><input${isOwner() ? '' : ' disabled'} id="set-${k}" data-set="${k}" inputmode="decimal" value="${esc(S.settings[k])}"><small>${help}</small></div>`;
   return head('Prices and fixed costs', 'New rows use these values; old rows keep their own price. Fill in the selling price and milk price.') + `
   <div class="card" style="max-width:760px"><div class="form">
     ${f('buyPrice', 'Price per gram of minerals (K)', 'Fixed price paid to customers who bring minerals')}
@@ -883,10 +913,241 @@ V.prices = () => {
     ${f('sellPrice', 'Selling price per gram (K)', 'Used for new sales')}
     ${f('milkPrice', 'Milk price per gram (K)', 'Used to show what lost milk is worth')}
   </div></div>
-  <div class="card" style="max-width:760px"><h2>Backup</h2><p class="note" style="margin:0 0 12px">Everything is saved in this browser only, on this device. Download a backup at the end of every day and keep it safe. Restore puts a backup back (for example on a new computer).</p>
-  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="backupBtn">Download backup</button><button class="btn" id="restoreBtn">Restore from backup</button><input type="file" id="restoreFile" accept=".json,application/json" hidden><button class="btn" id="clearBtn">Clear everything</button></div></div>`;
+  ${!CLOUD ? `<div class="card" style="max-width:760px"><h2>Backup</h2><p class="note" style="margin:0 0 12px">Everything is saved in this browser only, on this device. Download a backup at the end of every day and keep it safe. Restore puts a backup back (for example on a new computer).</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="backupBtn">Download backup</button><button class="btn" id="restoreBtn">Restore from backup</button><input type="file" id="restoreFile" accept=".json,application/json" hidden><button class="btn" id="clearBtn">Clear everything</button></div></div>`
+  : isOwner() ? `<div class="card" style="max-width:760px"><h2>Data</h2><p class="note" style="margin:0 0 12px">Everything is saved online; everyone with a login sees the same data. You can still download a copy for your own records.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="backupBtn">Download a copy</button>${localRows() ? `<button class="btn primary" id="uploadLocalBtn">Upload data typed in this browser before (${localRows()} rows)</button>` : ''}<button class="btn" id="restoreBtn">Upload a backup file</button><input type="file" id="restoreFile" accept=".json,application/json" hidden></div></div>` : ''}`;
+};
+V.team = () => {
+  const list = Object.values(people).sort((a, b) => (a.role === 'pending' ? 0 : 1) - (b.role === 'pending' ? 0 : 1) || String(a.name).localeCompare(String(b.name)));
+  const login = p => String(p.email || '').replace(/@somzam\.local$/, '');
+  return head('Team', 'Everyone who can log in. New people can do nothing until you set them to Staff or Owner.') + `
+  <div class="card">${dataTable([
+    { h: 'Name', f: p => `<input class="btn" style="width:100%;min-width:140px" data-person="${p.id}" data-f="name" value="${esc(p.name)}" aria-label="Name">` },
+    { h: 'Login', f: p => esc(login(p)) },
+    { h: 'Role', f: p => `<select class="btn" data-person="${p.id}" data-f="role" aria-label="Role">${[['owner', 'Owner: sees and changes everything'], ['staff', 'Staff: enters daily data'], ['pending', 'Waiting / blocked']].map(([v, t]) => `<option value="${v}"${p.role === v ? ' selected' : ''}>${t}</option>`).join('')}</select>` }
+  ], list)}</div>
+  <div class="card" style="max-width:760px"><h2>Add a person</h2><ol class="note" style="margin:0;padding-left:18px;line-height:1.7">
+    <li>Open supabase.com → your SomZam project → <b>Authentication</b> → <b>Users</b> → <b>Add user</b> → <b>Create new user</b>.</li>
+    <li>Email: their login name + <b>@somzam.local</b> (for example <b>peter@somzam.local</b>), choose a password, tick <b>Auto Confirm User</b>.</li>
+    <li>They appear here as "Waiting". Set them to <b>Staff</b> and type their name.</li>
+    <li>They log in with just <b>peter</b> and the password.</li></ol>
+  <p class="note" style="margin:12px 0 0">Staff can add sales, expenses, minerals brought in, advances, milk bought and milk per machine, and change only what they entered themselves. They cannot see salaries or change prices, machines or the starting point.</p></div>`;
 };
 V.machines = () => head('Machines', 'The 5 machines, the milk inside each one at the start, and what is inside now.') + sheetBlock('machines', 'Add machine');
+
+// ================= Online saving (Supabase) =================
+function uuid() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
+}
+function newRow(key, row) { if (CLOUD) { row._id = uuid(); row._by = me && me.id; } return row; }
+function cleanRow(row) { const o = {}; Object.keys(row).forEach(k => { if (k[0] !== '_') o[k] = row[k]; }); return o; }
+function fromEntry(e) { return Object.assign({}, e.data, { _id: e.id, _by: e.created_by }); }
+function localRows() {
+  let d = null; try { d = JSON.parse(localStorage.getItem('somzam-live')); } catch (e) { d = null; }
+  if (!d || typeof d !== 'object') return 0;
+  return sum(Object.keys(SHEETS).filter(k => k !== 'machines' && Array.isArray(d[k])), k => d[k].length);
+}
+
+function setSync(state) {
+  const el = document.getElementById('syncPill'); if (!el) return;
+  const map = { local: ['Saved in this browser only', ''], saving: ['Saving…', ''], saved: ['Online · all saved', 'ok'], error: ['Not saved · check internet', 'bad'], loading: ['Loading…', ''] };
+  const [t, cls] = map[state] || map.local;
+  el.textContent = t; el.className = 'test-pill ' + cls;
+}
+
+const pending = new Map();
+let flushTimer = null, inFlight = 0;
+function saveRow(key, row) { if (!CLOUD) return persist(); if (!row._id) row._id = uuid(); pending.set(row._id, { key, row }); queueFlush(500); }
+function saveSetting(k) { if (!CLOUD) return persist(); pending.set('setting:' + k, { setting: k }); queueFlush(500); }
+function queueFlush(ms) { setSync('saving'); clearTimeout(flushTimer); flushTimer = setTimeout(flush, ms); }
+async function flush() {
+  clearTimeout(flushTimer);
+  const items = [...pending.values()]; pending.clear();
+  if (!items.length) { if (!inFlight) setSync('saved'); return; }
+  inFlight++;
+  const rows = items.filter(i => i.row).map(i => ({ id: i.row._id, sheet: i.key, data: cleanRow(i.row) }));
+  const sets = items.filter(i => i.setting).map(i => ({ key: i.setting, value: S[i.setting] }));
+  let err = null;
+  try {
+    if (rows.length) { const r = await sb.from('entries').upsert(rows); if (r.error) err = r.error; }
+    if (sets.length && !err) { const r = await sb.from('settings').upsert(sets); if (r.error) err = r.error; }
+  } catch (e) { err = e; }
+  inFlight--;
+  if (!err) { setSync(pending.size ? 'saving' : 'saved'); return; }
+  const network = !err.code || /fetch|network|timeout/i.test(String(err.message));
+  if (network) {
+    items.forEach(i => { const id = i.row ? i.row._id : 'setting:' + i.setting; if (!pending.has(id)) pending.set(id, i); });
+    setSync('error'); queueFlush(5000); setSync('error');
+  } else {
+    setSync('error'); toast('Not saved: ' + err.message); reloadCloud();
+  }
+}
+async function removeRow(key, row) {
+  if (!CLOUD) return persist();
+  pending.delete(row._id);
+  const r = await sb.from('entries').delete().eq('id', row._id);
+  if (r.error) { toast('Not deleted: ' + r.error.message); reloadCloud(); }
+}
+window.addEventListener('beforeunload', e => { if (CLOUD && (pending.size || inFlight)) { flush(); e.preventDefault(); e.returnValue = ''; } });
+
+async function loadCloud() {
+  const fresh = JSON.parse(JSON.stringify(EXAMPLE));
+  Object.keys(SHEETS).forEach(k => fresh[k] = []);
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await sb.from('entries').select('id,sheet,data,created_by').order('created_at').order('id').range(from, from + 999);
+    if (error) throw error;
+    data.forEach(e => { if (fresh[e.sheet]) fresh[e.sheet].push(fromEntry(e)); });
+    if (data.length < 1000) break;
+  }
+  const st = await sb.from('settings').select('key,value');
+  if (st.error) throw st.error;
+  st.data.forEach(r => { if (fresh[r.key] && r.value) Object.assign(fresh[r.key], r.value); });
+  const pr = await sb.from('profiles').select('id,name,email,role');
+  if (pr.error) throw pr.error;
+  people = {}; pr.data.forEach(p => people[p.id] = p);
+  if (me && people[me.id]) me = people[me.id];
+  // keep rows this person is still typing that the server does not have yet
+  pending.forEach(i => { if (i.row && fresh[i.key] && !fresh[i.key].some(r => r._id === i.row._id)) fresh[i.key].push(i.row); });
+  S = fresh;
+  if (!S.machines.length) {
+    S.machines = EXAMPLE.machines.map(m => newRow('machines', Object.assign({}, m)));
+    if (isOwner()) S.machines.forEach(m => saveRow('machines', m));
+  }
+  lastLoad = Date.now();
+}
+let lastLoad = 0, reloading = null;
+function reloadCloud() {
+  if (!CLOUD || !me || reloading) return reloading;
+  reloading = (async () => { try { if (pending.size) await flush(); await loadCloud(); liveRender(); } catch (e) { setSync('error'); } finally { reloading = null; } })();
+  return reloading;
+}
+
+let renderWanted = false;
+function liveRender() {
+  const a = document.activeElement;
+  if (a && a.closest && a.closest('#view') && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) { renderWanted = true; return; }
+  renderWanted = false;
+  renderUser(); route(true); renderLists();
+}
+document.addEventListener('focusout', () => setTimeout(() => { if (renderWanted) liveRender(); }, 60));
+
+function subscribe() {
+  sb.channel('somzam-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'entries' }, p => {
+      if (p.eventType === 'DELETE') {
+        const id = p.old && p.old.id;
+        Object.keys(SHEETS).forEach(k => { const i = S[k].findIndex(r => r._id === id); if (i >= 0) S[k].splice(i, 1); });
+      } else {
+        const e = p.new;
+        if (!e || !S[e.sheet] || pending.has(e.id)) return;
+        const arr = S[e.sheet], i = arr.findIndex(r => r._id === e.id), row = fromEntry(e);
+        if (i >= 0) { Object.keys(arr[i]).forEach(k => delete arr[i][k]); Object.assign(arr[i], row); } else arr.push(row);
+      }
+      liveRender();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, p => {
+      const r = p.new; if (r && S[r.key] && r.value && !pending.has('setting:' + r.key)) { Object.assign(S[r.key], r.value); liveRender(); }
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, p => {
+      const r = p.new; if (!r || !r.id) return;
+      people[r.id] = r;
+      if (me && r.id === me.id) { if (r.role === 'pending') { sb.auth.signOut().finally(() => location.reload()); return; } me = r; }
+      liveRender();
+    })
+    .subscribe(status => { if (status === 'SUBSCRIBED' && Date.now() - lastLoad > 5000) reloadCloud(); });
+}
+window.addEventListener('online', () => { if (CLOUD && me) { flush(); reloadCloud(); } });
+document.addEventListener('visibilitychange', () => { if (CLOUD && me && document.visibilityState === 'visible' && Date.now() - lastLoad > 60000) reloadCloud(); });
+
+async function importData(d, label) {
+  if (!isOwner()) return;
+  const sheets = Object.keys(SHEETS).filter(k => Array.isArray(d[k]) && d[k].length);
+  const count = sum(sheets.filter(k => k !== 'machines'), k => d[k].length);
+  if (!confirm(`Upload ${count} rows from ${label} to the online database? Rows already online stay as they are, so do this only once.`)) return;
+  sheets.forEach(k => {
+    if (k === 'machines') {
+      d.machines.forEach(m => {
+        const ex = S.machines.find(x => norm(x.no) === norm(m.no));
+        if (ex) { Object.assign(ex, cleanRow(m)); saveRow('machines', ex); }
+        else { const r = newRow('machines', cleanRow(m)); S.machines.push(r); saveRow('machines', r); }
+      });
+      return;
+    }
+    d[k].forEach(r => { const row = newRow(k, cleanRow(r)); S[k].push(row); saveRow(k, row); });
+  });
+  ['settings', 'start'].forEach(k => { if (d[k] && typeof d[k] === 'object') { Object.assign(S[k], d[k]); saveSetting(k); } });
+  await flush();
+  route(true); toast(`${count} rows uploaded`);
+}
+
+async function updatePerson(t) {
+  const id = t.dataset.person, f = t.dataset.f, v = t.value;
+  if (f === 'role' && me && id === me.id && v !== 'owner' && !confirm('You are taking away your own owner rights. Continue?')) { t.value = 'owner'; return; }
+  const { error } = await sb.from('profiles').update({ [f]: v }).eq('id', id);
+  if (error) { toast('Not saved: ' + error.message); return; }
+  if (people[id]) people[id][f] = v;
+  toast('Saved');
+}
+
+function renderUser() {
+  const box = document.getElementById('userBox'); if (!box) return;
+  box.innerHTML = CLOUD && me ? `<span class="who">${esc(personName(me.id))} · ${me.role === 'owner' ? 'Owner' : 'Staff'}</span><button class="btn" id="logoutBtn">Log out</button>` : '';
+}
+
+function showLogin(msg) {
+  document.getElementById('app').hidden = true;
+  let el = document.getElementById('login');
+  if (!el) { el = document.createElement('div'); el.id = 'login'; document.body.appendChild(el); }
+  el.hidden = false;
+  el.innerHTML = `<form class="card login-card" id="loginForm">
+    <div class="brand" style="padding:0"><div class="brand-mark"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l6-11 4 6 3-4 5 9z"/></svg></div>
+    <div><div class="brand-name" style="color:var(--fg)">SomZam</div><div class="brand-sub" style="color:var(--muted)">Mining office · Zambia</div></div></div>
+    <h1>Log in</h1>
+    <div class="field"><label for="lg-user">Login name</label><input id="lg-user" autocomplete="username" autocapitalize="none" required></div>
+    <div class="field"><label for="lg-pass">Password</label><input id="lg-pass" type="password" autocomplete="current-password" required></div>
+    <p class="note" id="lg-msg" style="margin:0" role="status">${esc(msg || '')}</p>
+    <button class="btn primary" type="submit" style="justify-content:center">Log in</button></form>`;
+}
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'loginForm') return;
+  e.preventDefault();
+  const msg = document.getElementById('lg-msg');
+  let user = document.getElementById('lg-user').value.trim().toLowerCase();
+  if (!user.includes('@')) user += '@somzam.local';
+  msg.textContent = 'Logging in…';
+  const { error } = await sb.auth.signInWithPassword({ email: user, password: document.getElementById('lg-pass').value });
+  if (error) { msg.textContent = /fetch|network/i.test(error.message) ? 'No internet connection. Try again.' : 'Wrong login name or password.'; return; }
+  startSession();
+});
+
+async function startSession() {
+  const { data } = await sb.auth.getSession();
+  const session = data && data.session;
+  if (!session) return showLogin();
+  const pr = await sb.from('profiles').select('id,name,email,role').eq('id', session.user.id).maybeSingle();
+  if (pr.error) return showLogin('Could not connect. Check the internet and try again.');
+  if (!pr.data || pr.data.role === 'pending') { await sb.auth.signOut(); return showLogin('Your account is waiting for the owner to approve it. Ask the owner, then log in again.'); }
+  me = pr.data;
+  const lg = document.getElementById('login'); if (lg) lg.hidden = true;
+  document.getElementById('app').hidden = false;
+  document.getElementById('view').innerHTML = '<p class="note">Loading…</p>';
+  setSync('loading');
+  try { await loadCloud(); } catch (err) { setSync('error'); document.getElementById('view').innerHTML = `<div class="card"><p class="note" style="margin:0">Could not load the data: ${esc(err.message)}. Check the internet and reload the page.</p></div>`; return; }
+  setSync(pending.size ? 'saving' : 'saved');
+  renderUser(); renderLists(); route();
+  subscribe();
+}
+
+function boot() {
+  renderLists();
+  if (!CLOUD) { setSync('local'); route(); return; }
+  document.querySelector('.side-foot').textContent = 'Online. Everyone with a login sees the same data.';
+  if (!sb) { document.getElementById('view').innerHTML = '<div class="card"><p class="note" style="margin:0">Cannot reach the online database. Check the internet and reload the page.</p></div>'; setSync('error'); return; }
+  document.getElementById('app').hidden = true;
+  startSession();
+}
 
 // ================= Router =================
 const label = {};
@@ -896,12 +1157,15 @@ function renderNav(active) {
   document.getElementById('nav').innerHTML = NAV.map((n, gi) => {
     if (!n.children) return `<a class="nav-item ${active === n.id ? 'active' : ''}" href="#${n.id}">${svg(I[n.icon])}${n.label}</a>`;
     const open = openGroups.has(gi);
+    const kids = n.children.filter(c => pageAllowed(c.id));
+    if (!kids.length) return '';
     return `<div class="nav-group ${open ? 'open' : ''}"><button data-group="${gi}" aria-expanded="${open}">${svg(I[n.icon])}${n.label}${svg(I.chev, 'chev')}</button>
-      <div class="sub">${n.children.map(c => `<a href="#${c.id}" class="${active === c.id ? 'active' : ''}">${c.label}</a>`).join('')}</div></div>`;
+      <div class="sub">${kids.map(c => `<a href="#${c.id}" class="${active === c.id ? 'active' : ''}">${c.label}</a>`).join('')}</div></div>`;
   }).join('');
 }
-function currentId() { const h = location.hash.slice(1); return V[h] ? h : 'dashboard'; }
-function route() {
+const pageAllowed = id => id === 'team' ? CLOUD && isOwner() : id === 'salaries' ? isOwner() : true;
+function currentId() { const h = location.hash.slice(1); return V[h] && pageAllowed(h) ? h : 'dashboard'; }
+function route(keepScroll) {
   const id = currentId();
   NAV.forEach((n, gi) => { if (n.children && n.children.some(c => c.id === id)) openGroups.add(gi); });
   renderNav(id);
@@ -910,7 +1174,7 @@ function route() {
   document.getElementById('view').innerHTML = V[id]();
   document.querySelectorAll('#view [id^="sheet-"]').forEach(h => mountSheet(h.id.slice(6)));
   document.getElementById('app').classList.remove('menu-open');
-  window.scrollTo(0, 0);
+  if (!keepScroll) window.scrollTo(0, 0);
 }
 
 let toastTimer;
@@ -924,13 +1188,15 @@ function onCellChange(e) {
     const key = table.dataset.sheet;
     const row = S[key][+t.dataset.r];
     const col = SHEETS[key].cols.find(c => c.k === t.dataset.k);
+    if (!canEdit(key, row)) return;
     row[t.dataset.k] = col.t === 'num' ? (t.value.trim() === '' ? '' : num(t.value)) : t.value;
-    persist();
+    saveRow(key, row);
     refreshSheet(key);
     return;
   }
-  if (t.dataset.set) { S.settings[t.dataset.set] = num(t.value); persist(); return; }
-  if (t.dataset.start) { S.start[t.dataset.start] = t.dataset.start === 'date' ? t.value : num(t.value); persist(); renderStartNow(); return; }
+  if (t.dataset.set) { if (!isOwner()) return; S.settings[t.dataset.set] = num(t.value); saveSetting('settings'); return; }
+  if (t.dataset.start) { if (!isOwner()) return; S.start[t.dataset.start] = t.dataset.start === 'date' ? t.value : num(t.value); saveSetting('start'); renderStartNow(); return; }
+  if (t.dataset.person && e.type === 'change') { updatePerson(t); return; }
   if (t.id === 'monthSel') { selMonth = t.value; route(); }
   if (t.id === 'periodSel') { selPeriod[t.dataset.kind] = t.value; route(); }
 }
@@ -942,6 +1208,7 @@ document.addEventListener('change', e => {
   file.text().then(txt => {
     const d = JSON.parse(txt);
     if (!d || typeof d !== 'object' || !Array.isArray(d.machines) || !d.start) throw new Error('not a SomZam backup');
+    if (CLOUD) { importData(d, 'the file "' + file.name + '"'); return; }
     if (!confirm('Replace the data in this browser with the backup "' + file.name + '"?')) return;
     S = JSON.parse(JSON.stringify(EXAMPLE)); Object.keys(S).forEach(k => { if (d[k] !== undefined) S[k] = d[k]; });
     persist(); selMonth = null; route(); toast('Backup restored');
@@ -962,7 +1229,7 @@ document.addEventListener('keydown', e => {
   const key = table.dataset.sheet, r = +t.dataset.r + d, k = t.dataset.k;
   const next = table.querySelector(`[data-r="${r}"][data-k="${k}"]`);
   if (next) next.focus();
-  else if (d > 0) addRow(key, k);
+  else if (d > 0 && canAdd(key)) addRow(key, k);
 });
 
 document.addEventListener('click', e => {
@@ -972,11 +1239,12 @@ document.addEventListener('click', e => {
   if (add) { addRow(add.dataset.add); return; }
   if (e.target.closest('[data-add-day]')) {
     const first = S.machineMilk.length;
-    machineNos().forEach(no => S.machineMilk.push({ date: todayStr(), machine: no, added: '', used: '', left: '' }));
-    persist(); mountSheet('machineMilk', { r: first, k: 'added' }); toast(`${machineNos().length} rows added for today`); return;
+    machineNos().forEach(no => { const row = newRow('machineMilk', { date: todayStr(), machine: no, added: '', used: '', left: '' }); S.machineMilk.push(row); saveRow('machineMilk', row); }); mountSheet('machineMilk', { r: first, k: 'added' }); toast(`${machineNos().length} rows added for today`); return;
   }
   const del = e.target.closest('[data-del]');
-  if (del) { const key = del.closest('table.sheet').dataset.sheet; S[key].splice(+del.dataset.del, 1); persist(); mountSheet(key); toast('Row deleted'); return; }
+  if (del) { const key = del.closest('table.sheet').dataset.sheet; const row = S[key][+del.dataset.del]; if (!row || !canEdit(key, row)) return; S[key].splice(+del.dataset.del, 1); removeRow(key, row); mountSheet(key); toast('Row deleted'); return; }
+  if (e.target.id === 'uploadLocalBtn') { let d = null; try { d = JSON.parse(localStorage.getItem('somzam-live')); } catch (err) { d = null; } if (d) importData(d, 'this browser'); return; }
+  if (e.target.id === 'logoutBtn') { sb.auth.signOut().finally(() => location.reload()); return; }
   if (e.target.id === 'backupBtn') {
     const url = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' }));
     const a = document.createElement('a'); a.href = url; a.download = 'somzam-backup-' + todayStr() + '.json'; document.body.appendChild(a); a.click(); a.remove();
@@ -990,9 +1258,8 @@ document.addEventListener('click', e => {
 });
 document.getElementById('menuBtn').addEventListener('click', () => document.getElementById('app').classList.add('menu-open'));
 document.getElementById('scrim').addEventListener('click', () => document.getElementById('app').classList.remove('menu-open'));
-window.addEventListener('hashchange', route);
-renderLists();
-route();
+window.addEventListener('hashchange', () => route());
+boot();
 </script>
 
 </html>
